@@ -150,10 +150,9 @@ button { cursor: pointer; }
 /* true page geometry: every length is points × --u (set by script) */
 .paper.film.pageview { width: calc(595.28 * var(--u)); font-size: calc(12 * var(--u)); line-height: calc(19 * var(--u));
   padding: calc(72 * var(--u)) calc(108 * var(--u)) calc(86 * var(--u)) calc(72 * var(--u)); }
-[dir="ltr"] .paper.film.pageview { padding: calc(72 * var(--u)) calc(72 * var(--u)) calc(86 * var(--u)) calc(108 * var(--u)); }
 
 /* phone reflow view: same content, fluid layout */
-.paper.film.reflow { max-width: 794px; padding-block: 32px 64px; padding-inline-start: 38px; padding-inline-end: 16px; font-size: var(--script-size); line-height: 1.6; }
+.paper.film.reflow { min-height: 80vh; max-width: 794px; padding-block: 32px 64px; padding-inline-start: 38px; padding-inline-end: 16px; font-size: var(--script-size); line-height: 1.6; }
 .reflow .el-scene { font-weight: 700; margin-top: 2em; }
 .reflow .el-action { margin-top: 1em; }
 .reflow .el-character { margin-top: 1em; margin-inline-start: 26%; font-weight: 700; }
@@ -167,7 +166,7 @@ button { cursor: pointer; }
 .pgmark span { position: absolute; inset-inline-end: 10px; top: -.85em; background: var(--paper); color: var(--accent); font-family: var(--f-ui); font-size: 11px; line-height: 1.5; padding-inline: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- paper: show (two-column AV script) ---------- */
-.paper.show { max-width: 1080px; padding: 28px 28px 80px; font-family: var(--f-page); font-size: calc(var(--script-size) - 1px); line-height: 1.7; }
+.paper.show { min-height: 80vh; max-width: 1080px; padding: 28px 28px 80px; font-family: var(--f-page); font-size: calc(var(--script-size) - 1px); line-height: 1.7; }
 .show-head { display: grid; grid-template-columns: 38% 1fr 5.6em; font-family: var(--f-ui); font-size: 12px; color: var(--muted); border-bottom: 2px solid var(--ink); padding-bottom: 6px; }
 .show-head span { padding-inline: 12px; }
 .show-head span:last-child { text-align: end; }
@@ -225,6 +224,38 @@ button { cursor: pointer; }
 
 .backdrop { display: none; }
 
+/* ---------- teleprompter: a deliberate single dark look, like the real glass ---------- */
+.prompter { position: fixed; inset: 0; z-index: 90; background: #000; color: #F5F5F2; display: grid; grid-template-rows: 1fr auto; font-family: var(--f-ui); }
+.pr-view { position: relative; min-height: 0; display: grid; }
+.pr-stage { overflow: hidden; position: relative; min-height: 0; touch-action: none; cursor: grab; }
+.pr-stage.mirror { transform: scaleX(-1); }
+.pr-text { margin-inline: auto; padding-block: 38vh 70vh; padding-inline: 24px; font-family: var(--f-page); line-height: 1.55; font-weight: 700; }
+.pr-text p { margin: 0 0 .7em; }
+.pr-seg { font-family: var(--f-display); color: #FFC861; font-size: .62em; margin: 1.6em 0 .6em; font-weight: 700; }
+.pr-spk { color: #9FD8DF; font-size: .55em; margin: .8em 0 .1em; font-family: var(--f-ui); font-weight: 600; letter-spacing: .02em; }
+.pr-cue { color: #6E7D85; font-size: .45em; margin: .5em 0; font-family: var(--f-ui); font-weight: 500; }
+.pr-cue::before { content: "["; } .pr-cue::after { content: "]"; }
+.pr-dir { color: #9A9A96; font-weight: 400; font-size: .75em; }
+.pr-line { position: absolute; left: 0; right: 0; top: 34%; height: 0; pointer-events: none; z-index: 2; }
+.pr-line::before, .pr-line::after { content: ""; position: absolute; top: -12px; border: 12px solid transparent; }
+.pr-line::before { left: 6px; border-left-color: #E5483D; }
+.pr-line::after { right: 6px; border-right-color: #E5483D; }
+.pr-line span { position: absolute; left: 34px; right: 34px; top: -1px; border-top: 1px solid rgba(229,72,61,.35); }
+.pr-bar { background: #111; border-top: 1px solid #262626; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; justify-content: center;
+  padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); transition: opacity .25s; }
+.prompter.playing.idle .pr-bar { opacity: 0; }
+.prompter.playing.idle { cursor: none; }
+.pr-bar button { background: #222; color: #EEE; border: 1px solid #333; border-radius: 8px; padding: 6px 11px; font-size: 14px; min-width: 38px; }
+.pr-bar button:hover { background: #2C2C2C; }
+.pr-bar button.on { background: #3A1E1C; border-color: #E5483D; color: #FFB4AC; }
+.pr-bar .play { background: #E5483D; border-color: #E5483D; color: #fff; font-weight: 700; min-width: 92px; }
+.pr-grp { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #9A9A96; }
+.pr-grp b { color: #EEE; font-weight: 600; min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; font-size: 14px; }
+.pr-meta { font-size: 12px; color: #8A8A86; font-variant-numeric: tabular-nums; min-width: 9em; text-align: center; }
+.pr-prog { position: absolute; top: 0; left: 0; height: 3px; background: #E5483D; z-index: 3; }
+.pr-count { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22vmin; font-weight: 700; color: #E5483D; z-index: 4; pointer-events: none; font-family: var(--f-ui); }
+@media (prefers-reduced-motion: reduce) { .pr-bar { transition: none; } }
+
 /* off-screen typesetter: lays out text at the exact printed page geometry */
 .measure { position: absolute; top: 0; left: -20000px; visibility: hidden; pointer-events: none; font-family: var(--f-page); }
 
@@ -233,7 +264,8 @@ button { cursor: pointer; }
   .main { grid-template-columns: 1fr; }
   .side { position: fixed; z-index: 45; top: 0; bottom: 0; inset-inline-start: 0; width: min(320px, 86vw); transform: translateX(105%); transition: transform .2s ease; box-shadow: var(--shadow);
     padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
-  .side.open { transform: none; }
+  [dir="ltr"] .side { transform: translateX(-105%); }
+  .side.open, [dir="ltr"] .side.open { transform: none; }
   .backdrop.open { display: block; position: fixed; inset: 0; z-index: 44; background: rgba(10,14,22,.3); }
   .only-narrow { display: inline-flex; }
   .hide-narrow { display: none; }
@@ -262,8 +294,12 @@ button { cursor: pointer; }
     </div>
     <span class="stat" id="stat"></span>
     <button class="status" id="status" aria-label="حالة الحفظ والمزامنة"><i></i><span class="st-text">محفوظ على هذا الجهاز</span></button>
+    <button class="tbtn" id="btnPrompter">▶ الملقّن</button>
     <button class="tbtn hide-narrow" id="btnMeta">بيانات النص</button>
     <button class="tbtn" id="btnExport">تصدير</button>
+    <button class="tbtn" id="btnInstall" hidden>⤓ تثبيت</button>
+    <button class="icon-btn" id="btnLang" title="English">EN</button>
+    <button class="icon-btn" id="btnTheme" aria-label="المظهر" style="display:inline-grid;place-items:center"></button>
     <button class="icon-btn" id="btnSettings" aria-label="الإعدادات">⚙</button>
   </header>
   <div class="tools" id="tools"></div>
@@ -272,12 +308,12 @@ button { cursor: pointer; }
       <div class="side-tabs" role="tablist">
         <button role="tab" data-tab="nav" aria-selected="true" id="tabNav">المشاهد</button>
         <button role="tab" data-tab="chars" aria-selected="false" id="tabChars">الشخصيات</button>
-        <button role="tab" data-tab="lib" aria-selected="false">النصوص</button>
+        <button role="tab" data-tab="lib" aria-selected="false" id="tabLib">النصوص</button>
       </div>
       <div class="side-body" id="sideBody"></div>
     </aside>
     <div class="backdrop" id="backdrop"></div>
-    <div class="desk" id="desk"><div class="paper film" id="paper"></div></div>
+    <div class="desk" id="desk"><div class="paper film" id="paper" dir="rtl" lang="ar"></div></div>
   </div>
   <input type="file" id="fileIn" accept=".json,.txt,.fountain,.md,text/plain,application/json" hidden>
 </div>
@@ -292,8 +328,10 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 /* ================= constants ================= */
 const LS_KEY = 'midad.v1', LS_SET = 'midad.settings', LS_DEV = 'midad.device';
 const TYPES = ['scene', 'action', 'character', 'paren', 'dialogue', 'transition'];
-const TYPE_LABEL = { scene: 'رأس المشهد', action: 'وصف', character: 'شخصية', paren: 'توجيه', dialogue: 'حوار', transition: 'انتقال' };
-const PH = { scene: 'داخلي - المكان - الوقت', action: 'ماذا نرى ونسمع…', character: 'اسم الشخصية', paren: '(كيف تُقال)', dialogue: 'الحوار…', transition: 'قطع إلى:' };
+const TYPE_LABEL = { scene: ['رأس المشهد', 'Scene heading'], action: ['وصف', 'Action'], character: ['شخصية', 'Character'], paren: ['توجيه', 'Parenthetical'], dialogue: ['حوار', 'Dialogue'], transition: ['انتقال', 'Transition'] };
+const typeLabel = t => L(...TYPE_LABEL[t]);
+const PH = { scene: ['داخلي - المكان - الوقت', 'INT. - PLACE - TIME (in Arabic)'], action: ['ماذا نرى ونسمع…', 'What we see and hear…'], character: ['اسم الشخصية', 'Character name'], paren: ['(كيف تُقال)', '(how it is said)'], dialogue: ['الحوار…', 'Dialogue…'], transition: ['قطع إلى:', 'CUT TO: (قطع إلى:)'] };
+const phOf = t => L(...PH[t]);
 const TAB_ORDER = ['action', 'character', 'dialogue', 'paren', 'transition', 'scene'];
 const NEXT = { scene: 'action', action: 'action', character: 'dialogue', paren: 'dialogue', dialogue: 'action', transition: 'scene' };
 const TRANSITIONS = ['قطع إلى:', 'مزج إلى:', 'قطع حاد إلى:', 'ظهور تدريجي:', 'اختفاء تدريجي.', 'مطابقة إلى:', 'عودة إلى الحاضر:', 'النهاية'];
@@ -332,8 +370,10 @@ $('#geoCSS').textContent =
 
 /* ================= utils ================= */
 const AR_DIG = '٠١٢٣٤٥٦٧٨٩';
-let settings = { num: 'ar', zoom: 1, wpm: 130, marks: true };
-try { const sv = JSON.parse(localStorage.getItem(LS_SET) || '{}'); ['num', 'zoom', 'wpm', 'marks'].forEach(k => { if (k in sv) settings[k] = sv[k]; }); } catch (e) {}
+let settings = { num: 'ar', zoom: 1, wpm: 130, marks: true, lang: 'ar', theme: 'auto', pr: { speed: 5, size: 56, width: 70, mirror: false, cues: true, names: true } };
+try { const sv = JSON.parse(localStorage.getItem(LS_SET) || '{}'); ['num', 'zoom', 'wpm', 'marks', 'lang', 'theme'].forEach(k => { if (k in sv) settings[k] = sv[k]; }); if (sv.pr) Object.assign(settings.pr, sv.pr); else if (innerWidth < 600) settings.pr.size = 34; } catch (e) {}
+const L = (ar, en) => settings.lang === 'en' ? en : ar;
+const uiDir = () => settings.lang === 'en' ? 'ltr' : 'rtl';
 const N = n => settings.num === 'ar' ? String(n).replace(/\d/g, d => AR_DIG[d]) : String(n);
 const toLatinDigits = s => String(s).replace(/[٠-٩]/g, c => c.charCodeAt(0) - 1632).replace(/[۰-۹]/g, c => c.charCodeAt(0) - 1776);
 const mmss = sec => { sec = Math.max(0, Math.round(sec)); const m = Math.floor(sec / 60), s = sec % 60; return N(String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')); };
@@ -520,33 +560,37 @@ function initPwa() {
   });
 }
 const AUTH_ERR = {
-  'auth/invalid-credential': 'البريد أو كلمة المرور غير صحيحة.', 'auth/wrong-password': 'البريد أو كلمة المرور غير صحيحة.', 'auth/user-not-found': 'لا يوجد حساب بهذا البريد. اختر «إنشاء حساب».',
-  'auth/email-already-in-use': 'هذا البريد مسجّل بالفعل. اختر «دخول».', 'auth/weak-password': 'كلمة المرور قصيرة: ٦ أحرف على الأقل.', 'auth/invalid-email': 'صيغة البريد غير صحيحة.',
-  'auth/missing-password': 'اكتب كلمة المرور.', 'auth/network-request-failed': 'لا يوجد اتصال بالإنترنت. سجّل الدخول عند عودة الاتصال.',
-  'auth/operation-not-allowed': 'الدخول بالبريد غير مفعّل في Firebase. فعّله من Authentication ثم Sign-in method (الخطوة ٣ في الإعداد).',
-  'auth/too-many-requests': 'محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.', 'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'إعدادات Firebase غير صحيحة. أعد لصقها من «إعداد المزامنة».'
+  'auth/invalid-credential': ['البريد أو كلمة المرور غير صحيحة.', 'Wrong email or password.'], 'auth/wrong-password': ['البريد أو كلمة المرور غير صحيحة.', 'Wrong email or password.'],
+  'auth/user-not-found': ['لا يوجد حساب بهذا البريد. اختر «إنشاء حساب».', 'No account uses this email. Choose "Create account".'],
+  'auth/email-already-in-use': ['هذا البريد مسجّل بالفعل. اختر «دخول».', 'This email already has an account. Choose "Sign in".'],
+  'auth/weak-password': ['كلمة المرور قصيرة: ٦ أحرف على الأقل.', 'Password is too short: use at least 6 characters.'],
+  'auth/invalid-email': ['صيغة البريد غير صحيحة.', 'That email address is not valid.'], 'auth/missing-password': ['اكتب كلمة المرور.', 'Enter your password.'],
+  'auth/network-request-failed': ['لا يوجد اتصال بالإنترنت. سجّل الدخول عند عودة الاتصال.', 'No internet connection. Sign in once you are back online.'],
+  'auth/operation-not-allowed': ['الدخول بالبريد غير مفعّل في Firebase. فعّله من Authentication ثم Sign-in method (الخطوة ٣ في الإعداد).', 'Email sign-in is off in Firebase. Turn it on in Authentication › Sign-in method (setup step 3).'],
+  'auth/too-many-requests': ['محاولات كثيرة. انتظر قليلاً ثم حاول مجدداً.', 'Too many attempts. Wait a moment and try again.'],
+  'auth/api-key-not-valid.-please-pass-a-valid-api-key.': ['إعدادات Firebase غير صحيحة. أعد لصقها من «إعداد المزامنة».', 'The Firebase settings are not valid. Paste them again in "Sync setup".']
 };
 function openSignIn() {
   const sc = document.createElement('div'); sc.className = 'scrim';
-  sc.innerHTML = `<form class="dlg" dir="rtl" id="authForm"><h3>حسابك في مداد</h3>
-    <p class="side-note" style="padding:0">سجّل الدخول بالحساب نفسه على كل أجهزتك لتتزامن نصوصك. أول مرة؟ اكتب بريدك وكلمة مرور جديدة واختر «إنشاء حساب».</p>
-    <label>البريد الإلكتروني<input id="aEmail" type="email" autocomplete="username" dir="ltr" required></label>
-    <label>كلمة المرور<input id="aPass" type="password" autocomplete="current-password" dir="ltr" minlength="6"></label>
+  sc.innerHTML = `<form class="dlg" dir="${uiDir()}" id="authForm"><h3>${L('حسابك في مداد', 'Your Midad account')}</h3>
+    <p class="side-note" style="padding:0">${L('سجّل الدخول بالحساب نفسه على كل أجهزتك لتتزامن نصوصك. أول مرة؟ اكتب بريدك وكلمة مرور جديدة واختر «إنشاء حساب».', 'Sign in with the same account on all your devices to sync your scripts. First time? Enter your email and a new password, then choose "Create account".')}</p>
+    <label>${L('البريد الإلكتروني', 'Email')}<input id="aEmail" type="email" autocomplete="username" dir="ltr" required></label>
+    <label>${L('كلمة المرور', 'Password')}<input id="aPass" type="password" autocomplete="current-password" dir="ltr" minlength="6"></label>
     <p class="side-note" id="aMsg" style="padding:0;color:var(--accent)" role="alert"></p>
-    <div class="row-btns" style="justify-content:space-between;flex-wrap:wrap"><button type="button" class="tbtn" data-a="reset">نسيت كلمة المرور</button>
-    <span style="display:flex;gap:8px"><button type="button" class="tbtn" data-a="create">إنشاء حساب</button><button type="submit" class="tbtn primary">دخول</button></span></div></form>`;
+    <div class="row-btns" style="justify-content:space-between;flex-wrap:wrap"><button type="button" class="tbtn" data-a="reset">${L('نسيت كلمة المرور', 'Forgot password')}</button>
+    <span style="display:flex;gap:8px"><button type="button" class="tbtn" data-a="create">${L('إنشاء حساب', 'Create account')}</button><button type="submit" class="tbtn primary">${L('دخول', 'Sign in')}</button></span></div></form>`;
   document.body.appendChild(sc); $('#aEmail').focus();
   const msg = t => { $('#aMsg').textContent = t; };
   const run = async kind => {
     const email = $('#aEmail').value.trim(), pass = $('#aPass').value;
-    if (!email) return msg('اكتب بريدك الإلكتروني.');
+    if (!email) return msg(L('اكتب بريدك الإلكتروني.', 'Enter your email.'));
     try {
       msg('');
-      if (kind === 'reset') { await fb.F.sendPasswordResetEmail(fb.auth, email); msg('أُرسل رابط تغيير كلمة المرور إلى بريدك.'); return; }
+      if (kind === 'reset') { await fb.F.sendPasswordResetEmail(fb.auth, email); msg(L('أُرسل رابط تغيير كلمة المرور إلى بريدك.', 'A password reset link was sent to your email.')); return; }
       if (kind === 'create') await fb.F.createUserWithEmailAndPassword(fb.auth, email, pass);
       else await fb.F.signInWithEmailAndPassword(fb.auth, email, pass);
-      sc.remove(); toast(kind === 'create' ? 'أُنشئ حسابك، وبدأت المزامنة' : 'سُجّل الدخول، وبدأت المزامنة');
-    } catch (e) { msg(AUTH_ERR[e && e.code] || ('تعذّر الدخول' + (e && e.code ? ' (' + e.code + ')' : ''))); }
+      sc.remove(); toast(kind === 'create' ? L('أُنشئ حسابك، وبدأت المزامنة', 'Account created. Syncing started.') : L('سُجّل الدخول، وبدأت المزامنة', 'Signed in. Syncing started.'));
+    } catch (e) { const m = AUTH_ERR[e && e.code]; msg(m ? L(m[0], m[1]) : (L('تعذّر الدخول', 'Could not sign in') + (e && e.code ? ' (' + e.code + ')' : ''))); }
   };
   sc.addEventListener('click', e => { if (e.target === sc) sc.remove(); const b = e.target.closest('[data-a]'); if (b) run(b.dataset.a); });
   $('#authForm').addEventListener('submit', e => { e.preventDefault(); run('signin'); });
@@ -561,29 +605,30 @@ service cloud.firestore {
 }`;
 function openFbSetup() {
   const sc = document.createElement('div'); sc.className = 'scrim';
-  sc.innerHTML = `<form class="dlg" dir="rtl" id="fbForm" style="width:min(560px,100%);max-height:calc(100vh - 32px);overflow-y:auto"><h3>إعداد المزامنة</h3>
-    <p class="side-note" style="padding:0">تحتاج المزامنة إلى مشروع Firebase مجاني باسمك (مرة واحدة فقط). نصوصك تُحفظ فيه، ولا يصل إليها أحد غيرك.</p>
+  const B = t => `<b dir="ltr">${t}</b>`;
+  sc.innerHTML = `<form class="dlg" dir="${uiDir()}" id="fbForm" style="width:min(560px,100%);max-height:calc(100vh - 32px);overflow-y:auto"><h3>${L('إعداد المزامنة', 'Sync setup')}</h3>
+    <p class="side-note" style="padding:0">${L('تحتاج المزامنة إلى مشروع Firebase مجاني باسمك (مرة واحدة فقط). نصوصك تُحفظ فيه، ولا يصل إليها أحد غيرك.', 'Sync needs a free Firebase project in your name (once). Your scripts are stored there, and only you can reach them.')}</p>
     <ol style="margin:0;padding-inline-start:20px;font-size:13px;line-height:1.9">
-      <li>افتح <b dir="ltr">console.firebase.google.com</b> وأنشئ مشروعاً جديداً (يمكنك إيقاف Google Analytics).</li>
-      <li>من صفحة المشروع اضغط أيقونة الويب <b dir="ltr">&lt;/&gt;</b>، وسمِّ التطبيق «مداد»، ثم انسخ كتلة <b dir="ltr">firebaseConfig</b>.</li>
-      <li>من <b dir="ltr">Authentication</b> اضغط Get started، ثم فعّل <b dir="ltr">Email/Password</b> من Sign-in method.</li>
-      <li>من <b dir="ltr">Firestore Database</b> أنشئ قاعدة بيانات، ثم الصق القواعد أدناه في تبويب <b dir="ltr">Rules</b> واضغط Publish.</li>
-      <li>الصق كتلة الإعدادات هنا واحفظ.</li></ol>
-    <label>قواعد الأمان (الخطوة ٤)<textarea id="fbRules" dir="ltr" readonly style="font-family:ui-monospace,monospace;font-size:12px;min-height:150px;white-space:pre;overflow:auto">${esc(FB_RULES)}</textarea></label>
-    <button type="button" class="tbtn" data-copy="1" style="justify-self:start">نسخ القواعد</button>
-    <label>إعدادات Firebase (الخطوة ٢)<textarea id="fbCfg" dir="ltr" placeholder="const firebaseConfig = { apiKey: ..., projectId: ..., appId: ... };" style="font-family:ui-monospace,monospace;font-size:12px;min-height:130px"></textarea></label>
+      <li>${L(`افتح ${B('console.firebase.google.com')} وأنشئ مشروعاً جديداً (يمكنك إيقاف Google Analytics).`, `Open ${B('console.firebase.google.com')} and create a project (you can turn off Google Analytics).`)}</li>
+      <li>${L(`من صفحة المشروع اضغط أيقونة الويب ${B('&lt;/&gt;')}، وسمِّ التطبيق «مداد»، ثم انسخ كتلة ${B('firebaseConfig')}.`, `On the project page click the web icon ${B('&lt;/&gt;')}, name the app "Midad", then copy the ${B('firebaseConfig')} block.`)}</li>
+      <li>${L(`من ${B('Authentication')} اضغط Get started، ثم فعّل ${B('Email/Password')} من Sign-in method.`, `In ${B('Authentication')} click Get started, then turn on ${B('Email/Password')} under Sign-in method.`)}</li>
+      <li>${L(`من ${B('Firestore Database')} أنشئ قاعدة بيانات، ثم الصق القواعد أدناه في تبويب ${B('Rules')} واضغط Publish.`, `In ${B('Firestore Database')} create a database, then paste the rules below into the ${B('Rules')} tab and click Publish.`)}</li>
+      <li>${L('الصق كتلة الإعدادات هنا واحفظ.', 'Paste the settings block here and save.')}</li></ol>
+    <label>${L('قواعد الأمان (الخطوة ٤)', 'Security rules (step 4)')}<textarea id="fbRules" dir="ltr" readonly style="font-family:ui-monospace,monospace;font-size:12px;min-height:150px;white-space:pre;overflow:auto">${esc(FB_RULES)}</textarea></label>
+    <button type="button" class="tbtn" data-copy="1" style="justify-self:start">${L('نسخ القواعد', 'Copy rules')}</button>
+    <label>${L('إعدادات Firebase (الخطوة ٢)', 'Firebase settings (step 2)')}<textarea id="fbCfg" dir="ltr" placeholder="const firebaseConfig = { apiKey: ..., projectId: ..., appId: ... };" style="font-family:ui-monospace,monospace;font-size:12px;min-height:130px"></textarea></label>
     <p class="side-note" id="fbMsg" style="padding:0;color:var(--accent)" role="alert"></p>
-    <div class="row-btns"><button type="button" class="tbtn" data-close="1">إلغاء</button><button type="submit" class="tbtn primary">حفظ وتفعيل</button></div></form>`;
+    <div class="row-btns"><button type="button" class="tbtn" data-close="1">${L('إلغاء', 'Cancel')}</button><button type="submit" class="tbtn primary">${L('حفظ وتفعيل', 'Save and turn on')}</button></div></form>`;
   document.body.appendChild(sc);
   const cfg = fbConfig(); if (cfg) $('#fbCfg').value = JSON.stringify(cfg, null, 1);
   sc.addEventListener('click', async e => {
     if (e.target === sc || e.target.dataset.close) sc.remove();
-    if (e.target.dataset.copy) { const ta = $('#fbRules'); try { await navigator.clipboard.writeText(FB_RULES); toast('نُسخت القواعد'); } catch (er) { ta.focus(); ta.select(); } }
+    if (e.target.dataset.copy) { const ta = $('#fbRules'); try { await navigator.clipboard.writeText(FB_RULES); toast(L('نُسخت القواعد', 'Rules copied')); } catch (er) { ta.focus(); ta.select(); } }
   });
   $('#fbForm').addEventListener('submit', e => {
     e.preventDefault();
     const c = parseFbConfig($('#fbCfg').value);
-    if (!c) { $('#fbMsg').textContent = 'لم أجد apiKey و projectId و appId في النص. انسخ الكتلة كاملة من Firebase.'; return; }
+    if (!c) { $('#fbMsg').textContent = L('لم أجد apiKey و projectId و appId في النص. انسخ الكتلة كاملة من Firebase.', 'Could not find apiKey, projectId and appId. Copy the whole block from Firebase.'); return; }
     try { localStorage.setItem(LS_FB, JSON.stringify(c)); } catch (er) {}
     location.reload();
   });
@@ -648,7 +693,7 @@ async function applyRemote(id, v) {
     store.scripts.push(copy); cloud.dirty.add(copy.id);
     local.syncedAt = v.updatedAt || 0; local.updatedAt = Math.max(Date.now(), local.syncedAt + 1); cloud.dirty.add(local.id);
     scheduleFlush(500);
-    toast(`عُدّل «${remote.title || 'نص'}» على جهازين معاً، فحُفظت نسخة الجهاز الآخر باسم منفصل.`);
+    toast(L(`عُدّل «${remote.title || 'نص'}» على جهازين معاً، فحُفظت نسخة الجهاز الآخر باسم منفصل.`, `"${remote.title || 'Script'}" was edited on two devices at once, so the other device's version was saved separately.`));
     return true;
   }
   for (const k of Object.keys(local)) delete local[k];
@@ -706,16 +751,16 @@ window.addEventListener('offline', () => { if (cloud.col) cloud.state = 'offline
 const pendingCount = () => store.scripts.filter(unsynced).length + store.tombs.length;
 function syncInfo() {
   const p = pendingCount();
-  if (BUILD === 'offline') return ['نسخة دون اتصال', 'warn', 'هذه نسخة تعمل دون إنترنت، ونصوصها محفوظة في هذا المتصفح على هذا الجهاز فقط. لنقل تعديلاتك إلى حسابك: صدّر «نسخة احتياطية» من هنا، ثم استوردها في تطبيق مداد على claude.ai وسيُدمج كل نص مع نسخته.'];
-  if (!localOk) return ['تعذّر الحفظ', 'err', 'المتصفح رفض الحفظ المحلي (ربما لأن المساحة ممتلئة أو التصفح خاص). صدّر نسخة احتياطية الآن حتى لا تفقد عملك.'];
-  if (BUILD === 'pwa' && cloud.state === 'setup') return ['المزامنة غير مفعّلة', 'warn', 'نصوصك محفوظة على هذا الجهاز ويعمل التطبيق دون إنترنت. لتصل النصوص إلى أجهزتك الأخرى، فعّل المزامنة مرة واحدة بمشروع Firebase مجاني.'];
-  if (BUILD === 'pwa' && !cloud.col) return ['سجّل الدخول للمزامنة', 'warn', 'نصوصك محفوظة على هذا الجهاز. سجّل الدخول بحسابك لتتزامن مع أجهزتك الأخرى.'];
-  if (!cloud.col) return ['محفوظ على هذا الجهاز', '', 'نصوصك محفوظة في هذا المتصفح. المزامنة بين الأجهزة تعمل عند فتح التطبيق وأنت مسجّل الدخول في حسابك على Claude.'];
-  if (!navigator.onLine || cloud.state === 'offline') return ['غير متصل', 'warn', `لا يوجد اتصال بالإنترنت. استمر في الكتابة: كل تعديل يُحفظ على هذا الجهاز فوراً، ويُرفع إلى حسابك تلقائياً عند عودة الاتصال.${p ? ` (بانتظار المزامنة: ${N(p)})` : ''}`];
-  if (cloud.state === 'sync' || !cloud.ready) return ['جارٍ المزامنة…', 'busy', 'يُرسل آخر تعديلاتك إلى حسابك.'];
-  if (cloud.state === 'denied') return ['على هذا الجهاز فقط', 'warn', BUILD === 'pwa' ? 'رفضت قاعدة البيانات الحفظ. تأكد من لصق قواعد الأمان ونشرها في Firestore (الخطوة ٤ في «إعداد المزامنة»).' : 'لم يُسمح لهذه الصفحة بحفظ البيانات في حسابك، لذلك تبقى النصوص على هذا الجهاز. يمكنك السماح من قائمة الأذونات في الصفحة.'];
-  if (cloud.state === 'err') return ['ستُعاد المحاولة', 'warn', `تعذّرت المزامنة مؤقتاً. التعديلات محفوظة على هذا الجهاز وستُعاد المحاولة تلقائياً${p ? ` (${N(p)} بانتظار الرفع)` : ''}.`];
-  return [p ? 'جارٍ المزامنة…' : 'متزامن مع حسابك', p ? 'busy' : '', BUILD === 'pwa' ? 'نصوصك محفوظة على هذا الجهاز وفي حسابك. سجّل الدخول بالحساب نفسه على أي جهاز وستجدها، والتعديلات تصل إلى الأجهزة المفتوحة خلال ثوانٍ.' : 'نصوصك محفوظة على هذا الجهاز وفي حسابك. افتح مداد من أي جهاز مسجّل الدخول بالحساب نفسه وستجدها، والتعديلات تصل إلى الأجهزة المفتوحة خلال ثوانٍ.'];
+  if (BUILD === 'offline') return [L('نسخة دون اتصال', 'Offline copy'), 'warn', L('هذه نسخة تعمل دون إنترنت، ونصوصها محفوظة في هذا المتصفح على هذا الجهاز فقط. لنقل تعديلاتك إلى حسابك: صدّر «نسخة احتياطية» من هنا، ثم استوردها في تطبيق مداد وسيُدمج كل نص مع نسخته.', 'This copy works without internet, and its scripts are saved in this browser on this device only. To bring your edits to your account, export a backup here and import it in the Midad app; each script merges with its match.')];
+  if (!localOk) return [L('تعذّر الحفظ', 'Could not save'), 'err', L('المتصفح رفض الحفظ المحلي (ربما لأن المساحة ممتلئة أو التصفح خاص). صدّر نسخة احتياطية الآن حتى لا تفقد عملك.', 'The browser refused to save (storage may be full or this is a private window). Export a backup now so you do not lose work.')];
+  if (BUILD === 'pwa' && cloud.state === 'setup') return [L('المزامنة غير مفعّلة', 'Sync is off'), 'warn', L('نصوصك محفوظة على هذا الجهاز ويعمل التطبيق دون إنترنت. لتصل النصوص إلى أجهزتك الأخرى، فعّل المزامنة مرة واحدة بمشروع Firebase مجاني.', 'Your scripts are saved on this device and the app works offline. To get them on your other devices, turn on sync once with a free Firebase project.')];
+  if (BUILD === 'pwa' && !cloud.col) return [L('سجّل الدخول للمزامنة', 'Sign in to sync'), 'warn', L('نصوصك محفوظة على هذا الجهاز. سجّل الدخول بحسابك لتتزامن مع أجهزتك الأخرى.', 'Your scripts are saved on this device. Sign in to sync them with your other devices.')];
+  if (!cloud.col) return [L('محفوظ على هذا الجهاز', 'Saved on this device'), '', L('نصوصك محفوظة في هذا المتصفح. المزامنة بين الأجهزة تعمل عند فتح التطبيق وأنت مسجّل الدخول في حسابك على Claude.', 'Your scripts are saved in this browser. Syncing between devices works when you open the app signed in to your Claude account.')];
+  if (!navigator.onLine || cloud.state === 'offline') return [L('غير متصل', 'Offline'), 'warn', L('لا يوجد اتصال بالإنترنت. استمر في الكتابة: كل تعديل يُحفظ على هذا الجهاز فوراً، ويُرفع إلى حسابك تلقائياً عند عودة الاتصال.', 'No internet connection. Keep writing: every edit is saved on this device right away and uploads to your account when you are back online.') + (p ? ` (${L('بانتظار المزامنة', 'waiting to sync')}: ${N(p)})` : '')];
+  if (cloud.state === 'sync' || !cloud.ready) return [L('جارٍ المزامنة…', 'Syncing…'), 'busy', L('يُرسل آخر تعديلاتك إلى حسابك.', 'Sending your latest edits to your account.')];
+  if (cloud.state === 'denied') return [L('على هذا الجهاز فقط', 'This device only'), 'warn', BUILD === 'pwa' ? L('رفضت قاعدة البيانات الحفظ. تأكد من لصق قواعد الأمان ونشرها في Firestore (الخطوة ٤ في «إعداد المزامنة»).', 'The database refused to save. Make sure the security rules are pasted and published in Firestore (step 4 of Sync setup).') : L('لم يُسمح لهذه الصفحة بحفظ البيانات في حسابك، لذلك تبقى النصوص على هذا الجهاز. يمكنك السماح من قائمة الأذونات في الصفحة.', 'This page is not allowed to save to your account, so scripts stay on this device. You can allow it from the page permissions menu.')];
+  if (cloud.state === 'err') return [L('ستُعاد المحاولة', 'Will retry'), 'warn', L('تعذّرت المزامنة مؤقتاً. التعديلات محفوظة على هذا الجهاز وستُعاد المحاولة تلقائياً.', 'Sync failed for now. Your edits are saved on this device and it will retry automatically.') + (p ? ` (${L('بانتظار الرفع', 'waiting')}: ${N(p)})` : '')];
+  return [p ? L('جارٍ المزامنة…', 'Syncing…') : L('متزامن مع حسابك', 'Synced'), p ? 'busy' : '', L('نصوصك محفوظة على هذا الجهاز وفي حسابك. سجّل الدخول بالحساب نفسه على أي جهاز وستجدها، والتعديلات تصل إلى الأجهزة المفتوحة خلال ثوانٍ.', 'Your scripts are saved on this device and in your account. Use the same account on any device to find them; edits reach your open devices within seconds.')];
 }
 function refreshStatus() {
   const el = $('#status'); if (!el) return;
@@ -929,11 +974,12 @@ const paper = $('#paper');
 let curIdx = 0, curField = 'x', lastPg = null;
 
 function applySettings() {
+  applyLang();
   $('#app').classList.toggle('latin', settings.num !== 'ar');
   document.documentElement.style.setProperty('--script-size', Math.round(16 * settings.zoom) + 'px');
 }
 function layoutPaper() {
-  if (cur().mode !== 'film') { paper.classList.remove('pageview', 'reflow'); return; }
+  if (cur().mode !== 'film') { paper.classList.remove('pageview', 'reflow'); paper.style.minHeight = ''; return; }
   const desk = $('#desk'), cs = getComputedStyle(desk);
   const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   let u = PT * settings.zoom;
@@ -945,7 +991,7 @@ function layoutPaper() {
 }
 function render() {
   const s = cur();
-  paper.className = 'paper ' + (s.mode === 'show' ? 'show' : 'film');
+  paper.className = 'paper ' + (s.mode === 'show' ? 'show' : 'film'); paper.style.minHeight = '';
   paper.innerHTML = '';
   if (s.mode === 'show') renderShow(s); else { layoutPaper(); renderFilm(s); }
   renderTools(); updateDerived.flush();
@@ -963,7 +1009,7 @@ function renderFilm(s) {
   const frag = document.createDocumentFragment();
   s.els.forEach((e, i) => {
     const d = document.createElement('div');
-    d.className = `el el-${e.t} k k-${e.t}`; d.dataset.i = i; d.dataset.ph = PH[e.t]; d.dir = 'rtl';
+    d.className = `el el-${e.t} k k-${e.t}`; d.dataset.i = i; d.dataset.ph = phOf(e.t); d.dir = 'rtl';
     makeEditable(d); d.textContent = e.x || ''; if (!e.x) d.classList.add('is-empty');
     frag.appendChild(d);
   });
@@ -984,7 +1030,7 @@ function drawMarks(pg) {
       y = el.offsetTop + el.offsetHeight * (b.k / n);
     }
     const m = document.createElement('div'); m.className = 'pgmark'; m.style.top = y.toFixed(1) + 'px';
-    m.innerHTML = `<span>صفحة ${N(b.p)}</span>`;
+    m.innerHTML = `<span>${L('صفحة', 'Page')} ${N(b.p)}</span>`;
     frag.appendChild(m);
   });
   paper.appendChild(frag);
@@ -999,25 +1045,25 @@ function renderShow(s) {
   s.els.forEach((e, i) => {
     if (e.t === 'seg') {
       const d = document.createElement('div'); d.className = 'seg'; d.dataset.i = i;
-      const x = document.createElement('div'); x.className = 'seg-x'; x.dataset.f = 'x'; x.dataset.ph = 'اسم الفقرة'; makeEditable(x); x.textContent = e.x || ''; if (!e.x) x.classList.add('is-empty');
+      const x = document.createElement('div'); x.className = 'seg-x'; x.dataset.f = 'x'; x.dataset.ph = L('اسم الفقرة', 'Segment name'); makeEditable(x); x.textContent = e.x || ''; if (!e.x) x.classList.add('is-empty');
       const t = document.createElement('span'); t.className = 'seg-time';
       d.append(x, t); frag.appendChild(d);
     } else {
       const d = document.createElement('div'); d.className = 'row'; d.dataset.i = i;
-      const v = document.createElement('div'); v.className = 'cell v'; v.dataset.f = 'v'; v.dataset.ph = 'لقطة، جرافيك، مقطع…'; makeEditable(v); v.textContent = e.v || ''; if (!e.v) v.classList.add('is-empty');
+      const v = document.createElement('div'); v.className = 'cell v'; v.dataset.f = 'v'; v.dataset.ph = L('لقطة، جرافيك، مقطع…', 'Shot, graphic, clip…'); makeEditable(v); v.textContent = e.v || ''; if (!e.v) v.classList.add('is-empty');
       const au = document.createElement('div'); au.className = 'cell aud';
-      const sp = document.createElement('div'); sp.className = 'spk'; sp.dataset.f = 's'; sp.dataset.ph = 'المتحدث'; makeEditable(sp); sp.textContent = e.s || ''; if (!e.s) sp.classList.add('is-empty');
-      const a = document.createElement('div'); a.className = 'atext'; a.dataset.f = 'a'; a.dataset.ph = 'ما يُقال على الهواء…'; makeEditable(a); a.textContent = e.a || ''; if (!e.a) a.classList.add('is-empty');
+      const sp = document.createElement('div'); sp.className = 'spk'; sp.dataset.f = 's'; sp.dataset.ph = L('المتحدث', 'Speaker'); makeEditable(sp); sp.textContent = e.s || ''; if (!e.s) sp.classList.add('is-empty');
+      const a = document.createElement('div'); a.className = 'atext'; a.dataset.f = 'a'; a.dataset.ph = L('ما يُقال على الهواء…', 'What is said on air…'); makeEditable(a); a.textContent = e.a || ''; if (!e.a) a.classList.add('is-empty');
       au.append(sp, a);
       const tm = document.createElement('div'); tm.className = 'tm';
-      const du = document.createElement('input'); du.className = 'dur'; du.dataset.f = 'd'; du.id = 'dur-' + i; du.value = e.d ? fmtDurInput(e.d) : ''; du.setAttribute('aria-label', 'مدة يدوية'); du.inputMode = 'numeric';
+      const du = document.createElement('input'); du.className = 'dur'; du.dataset.f = 'd'; du.id = 'dur-' + i; du.value = e.d ? fmtDurInput(e.d) : ''; du.setAttribute('aria-label', L('مدة يدوية', 'Manual duration')); du.inputMode = 'numeric';
       const cu = document.createElement('span'); cu.className = 'cum';
       tm.append(du, cu); d.append(v, au, tm); frag.appendChild(d);
     }
   });
   paper.appendChild(frag);
   const add = document.createElement('div'); add.className = 'add-row';
-  add.innerHTML = '<button class="tbtn" data-act="addRow">+ سطر</button><button class="tbtn" data-act="addSeg">+ فقرة</button>';
+  add.innerHTML = `<button class="tbtn" data-act="addRow">${L('+ سطر', '+ Row')}</button><button class="tbtn" data-act="addSeg">${L('+ فقرة', '+ Segment')}</button>`;
   paper.appendChild(add);
 }
 function fmtDurInput(d) { const sec = parseDur(d); if (!sec) return ''; return sec >= 60 ? N(Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0')) : N(sec); }
@@ -1040,7 +1086,8 @@ const updateDerived = debounce(() => {
     const pg = paginate(s.els); lastPg = pg;
     drawMarks(pg);
     const scenes = s.els.filter(e => e.t === 'scene').length;
-    $('#stat').innerHTML = `<b>${N(pg.count)}</b> ${pg.count === 1 ? 'صفحة' : pg.count === 2 ? 'صفحتان' : 'صفحات'}<span class="stat-extra"> · نحو ${N(pg.count)} د · ${N(scenes)} مشاهد</span>`;
+    $('#stat').innerHTML = `<b>${N(pg.count)}</b> ${L(pg.count === 1 ? 'صفحة' : pg.count === 2 ? 'صفحتان' : 'صفحات', pg.count === 1 ? 'page' : 'pages')}<span class="stat-extra"> · ${L('نحو', '≈')} ${N(pg.count)} ${L('د', 'min')} · ${N(scenes)} ${L('مشاهد', 'scenes')}</span>`;
+    paper.style.minHeight = paper.classList.contains('pageview') ? `calc(${pg.count} * ${PAGE.h} * var(--u))` : '';
     navCache = { pg };
   } else {
     lastPg = null;
@@ -1050,8 +1097,8 @@ const updateDerived = debounce(() => {
       const du = row.querySelector('.dur'); if (du && document.activeElement !== du) du.placeholder = mmss(rowSecs({ a: s.els[i].a, d: '' }));
       row.querySelector('.cum').textContent = mmss(r.start + r.s);
     });
-    tm.segs.forEach((g, i) => { const el = paper.querySelector(`.seg[data-i="${i}"] .seg-time`); if (el) el.innerHTML = `<b>${mmss(g.dur)}</b> · يبدأ ${mmss(g.start)}`; });
-    $('#stat').innerHTML = `المدة <b>${mmss(tm.total)}</b><span class="stat-extra"> · ${N(settings.wpm)} كلمة/د</span>`;
+    tm.segs.forEach((g, i) => { const el = paper.querySelector(`.seg[data-i="${i}"] .seg-time`); if (el) el.innerHTML = `<b>${mmss(g.dur)}</b> · ${L('يبدأ', 'starts')} ${mmss(g.start)}`; });
+    $('#stat').innerHTML = `${L('المدة', 'Runtime')} <b>${mmss(tm.total)}</b><span class="stat-extra"> · ${N(settings.wpm)} ${L('كلمة/د', 'wpm')}</span>`;
     navCache = { tm };
   }
   renderSide();
@@ -1062,19 +1109,19 @@ let navCache = {};
 function renderTools() {
   const s = cur(), t = $('#tools');
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌥' : 'Alt+';
-  let h = `<button class="icon-btn" id="bUndo" aria-label="تراجع" title="تراجع">↶</button><button class="icon-btn" id="bRedo" aria-label="إعادة" title="إعادة">↷</button><span class="sep"></span>`;
+  let h = `<button class="icon-btn" id="bUndo" aria-label="${L('تراجع', 'Undo')}" title="${L('تراجع', 'Undo')}">↶</button><button class="icon-btn" id="bRedo" aria-label="${L('إعادة', 'Redo')}" title="${L('إعادة', 'Redo')}">↷</button><span class="sep"></span>`;
   if (s.mode === 'film') {
-    h += `<span class="lbl">نوع السطر</span>`;
-    h += TYPES.map((ty, k) => `<button class="chip" data-type="${ty}">${TYPE_LABEL[ty]} <kbd>${mod}${k + 1}</kbd></button>`).join('');
+    h += `<span class="lbl">${L('نوع السطر', 'Line type')}</span>`;
+    h += TYPES.map((ty, k) => `<button class="chip" data-type="${ty}">${typeLabel(ty)} <kbd>${mod}${k + 1}</kbd></button>`).join('');
   } else {
-    h += `<button class="chip" data-act="addRow">+ سطر</button><button class="chip" data-act="addSeg">+ فقرة</button><span class="sep"></span><span class="lbl">إشارات الصورة</span>`;
+    h += `<button class="chip" data-act="addRow">${L('+ سطر', '+ Row')}</button><button class="chip" data-act="addSeg">${L('+ فقرة', '+ Segment')}</button><span class="sep"></span><span class="lbl">${L('إشارات الصورة', 'Picture cues')}</span>`;
     h += CUES.map(c => `<button class="chip cue" data-cue="${esc(c)}">${esc(c.replace(/:\s*$/, ''))}</button>`).join('');
   }
   t.innerHTML = h;
   $('#modeFilm').setAttribute('aria-pressed', s.mode === 'film');
   $('#modeShow').setAttribute('aria-pressed', s.mode === 'show');
-  $('#tabNav').textContent = s.mode === 'film' ? 'المشاهد' : 'الفقرات';
-  $('#tabChars').textContent = s.mode === 'film' ? 'الشخصيات' : 'المتحدثون';
+  $('#tabNav').textContent = s.mode === 'film' ? L('المشاهد', 'Scenes') : L('الفقرات', 'Segments');
+  $('#tabChars').textContent = s.mode === 'film' ? L('الشخصيات', 'Characters') : L('المتحدثون', 'Speakers');
   if (document.activeElement !== $('#titleIn')) $('#titleIn').value = s.title || '';
   updateUndo(); markToolbar();
 }
@@ -1159,7 +1206,7 @@ paper.addEventListener('paste', e => {
         if (!before) s.els.splice(i, 1);
       });
       focusAt(Math.min(i + parsed.length - (before ? 0 : 1), cur().els.length - 1), Infinity);
-      toast(`أُدرج ${N(parsed.length)} سطر بتنسيق السيناريو`);
+      toast(L(`أُدرج ${N(parsed.length)} سطر بتنسيق السيناريو`, `Inserted ${N(parsed.length)} lines in screenplay format`));
       return;
     }
   }
@@ -1323,7 +1370,7 @@ function acUpdate(el) {
       else if (idx === 1) { const set = new Set(); s.els.forEach((o, k) => { if (k !== i && o.t === 'scene') { const p = o.x.split(/[-–—]/); if (p[1] && p[1].trim()) set.add(p[1].trim()); } }); opts = [...set]; }
       else opts = SCENE_TIME;
       const list = opts.filter(o => o !== q && o.startsWith(q)).slice(0, 8);
-      return acShow(el, list.map(o => ({ label: o, hint: idx === 0 ? 'المكان' : idx === 1 ? 'موقع سابق' : 'الوقت', val: o })), it => {
+      return acShow(el, list.map(o => ({ label: o, hint: idx === 0 ? L('المكان', 'Place') : idx === 1 ? L('موقع سابق', 'Used before') : L('الوقت', 'Time'), val: o })), it => {
         const p = parts.slice(0, idx).map(z => z.trim()); p.push(it.val);
         setElText(el, p.join(' - ') + (idx < 2 ? ' - ' : ''));
       });
@@ -1381,7 +1428,7 @@ function setMode(m) {
   const s = cur(); if (s.mode === m) return;
   structural(() => { s.els = m === 'show' ? filmToShow(s.els) : showToFilm(s.els); s.mode = m; });
   curIdx = 0; focusAt(0, Infinity, 'x');
-  toast(m === 'show' ? 'حُوّل النص إلى صيغة البرنامج (صورة | صوت)' : 'حُوّل النص إلى صيغة السيناريو', 'تراجع', undo);
+  toast(m === 'show' ? L('حُوّل النص إلى صيغة البرنامج (صورة | صوت)', 'Converted to show format (picture | sound)') : L('حُوّل النص إلى صيغة السيناريو', 'Converted to screenplay format'), L('تراجع', 'Undo'), undo);
 }
 $('#modeFilm').addEventListener('click', () => setMode('film'));
 $('#modeShow').addEventListener('click', () => setMode('show'));
@@ -1395,27 +1442,27 @@ function renderSide() {
   if (sideTab === 'nav') {
     const head = s.mode === 'film' ? 'scene' : 'seg';
     const bl = blocks(s.els, head);
-    if (!bl.length) { body.innerHTML = `<p class="side-note">${s.mode === 'film' ? 'أضف رأس مشهد (Alt+1) ليظهر هنا.' : 'أضف فقرة لتظهر هنا.'}</p>`; return; }
+    if (!bl.length) { body.innerHTML = `<p class="side-note">${s.mode === 'film' ? L('أضف رأس مشهد (Alt+1) ليظهر هنا.', 'Add a scene heading (Alt+1) to see it here.') : L('أضف فقرة لتظهر هنا.', 'Add a segment to see it here.')}</p>`; return; }
     const pg = navCache.pg, tm = navCache.tm;
-    body.innerHTML = `<p class="side-note">اسحب ${s.mode === 'film' ? 'مشهداً' : 'فقرة'} لتغيير الترتيب.</p>` + bl.map(([a], k) => {
+    body.innerHTML = `<p class="side-note">${s.mode === 'film' ? L('اسحب مشهداً لتغيير الترتيب.', 'Drag a scene to reorder.') : L('اسحب فقرة لتغيير الترتيب.', 'Drag a segment to reorder.')}</p>` + bl.map(([a], k) => {
       const e = s.els[a];
-      const meta = s.mode === 'film' ? (pg && pg.sceneP[k] ? 'ص ' + N(pg.sceneP[k]) : '') : (tm && tm.segs.get(a) ? mmss(tm.segs.get(a).dur) : '');
-      return `<div class="nav-item" draggable="true" data-start="${a}"><span class="n">${N(k + 1)}</span><span class="t">${esc(e.x || '(بلا عنوان)')}</span><span class="p">${meta}</span></div>`;
+      const meta = s.mode === 'film' ? (pg && pg.sceneP[k] ? L('ص ', 'p. ') + N(pg.sceneP[k]) : '') : (tm && tm.segs.get(a) ? mmss(tm.segs.get(a).dur) : '');
+      return `<div class="nav-item" draggable="true" data-start="${a}"><span class="n">${N(k + 1)}</span><span class="t" dir="rtl">${esc(e.x || L('(بلا عنوان)', '(untitled)'))}</span><span class="p">${meta}</span></div>`;
     }).join('');
     markNavCurrent();
   } else if (sideTab === 'chars') {
     if (s.mode === 'film') {
       const st = filmStats(s.els); const max = Math.max(1, ...st.map(c => c.words));
-      body.innerHTML = st.length ? `<p class="side-note">مرتّبة حسب حجم الحوار. اضغط ✎ لإعادة تسمية شخصية في كل النص.</p>` + st.map(c => `
-        <div class="ch-item"><div class="ch-row"><span class="ch-name">${esc(c.name)}</span><button class="icon-btn" data-rename="${esc(c.name)}" aria-label="إعادة تسمية">✎</button></div>
-        <span class="ch-meta">${N(c.blocks)} مداخلة · ${N(c.words)} كلمة · ${N(c.scenes.size)} ${c.scenes.size === 1 ? 'مشهد' : 'مشاهد'}</span>
-        <div class="bar"><span style="width:${(c.words / max * 100).toFixed(1)}%"></span></div></div>`).join('') : '<p class="side-note">لا توجد شخصيات بعد.</p>';
+      body.innerHTML = st.length ? `<p class="side-note">${L('مرتّبة حسب حجم الحوار. اضغط ✎ لإعادة تسمية شخصية في كل النص.', 'Sorted by amount of dialogue. Press ✎ to rename a character everywhere.')}</p>` + st.map(c => `
+        <div class="ch-item"><div class="ch-row"><span class="ch-name" dir="rtl">${esc(c.name)}</span><button class="icon-btn" data-rename="${esc(c.name)}" aria-label="${L('إعادة تسمية', 'Rename')}">✎</button></div>
+        <span class="ch-meta">${N(c.blocks)} ${L('مداخلة', 'speeches')} · ${N(c.words)} ${L('كلمة', 'words')} · ${N(c.scenes.size)} ${L(c.scenes.size === 1 ? 'مشهد' : 'مشاهد', c.scenes.size === 1 ? 'scene' : 'scenes')}</span>
+        <div class="bar"><span style="width:${(c.words / max * 100).toFixed(1)}%"></span></div></div>`).join('') : `<p class="side-note">${L('لا توجد شخصيات بعد.', 'No characters yet.')}</p>`;
     } else {
       const c = {}; s.els.forEach(e => { if (e.t === 'row' && (e.s || '').trim()) { const k = e.s.trim(); c[k] = c[k] || { name: k, rows: 0, words: 0, secs: 0 }; c[k].rows++; c[k].words += wc(e.a); c[k].secs += rowSecs(e); } });
       const st = Object.values(c).sort((a, b) => b.secs - a.secs); const max = Math.max(1, ...st.map(x => x.secs));
-      body.innerHTML = st.length ? `<p class="side-note">زمن كل متحدث على الهواء بحسب ${N(settings.wpm)} كلمة في الدقيقة.</p>` + st.map(x => `
-        <div class="ch-item"><div class="ch-row"><span class="ch-name">${esc(x.name)}</span><span class="ch-meta">${mmss(x.secs)}</span></div>
-        <span class="ch-meta">${N(x.rows)} سطر · ${N(x.words)} كلمة</span><div class="bar"><span style="width:${(x.secs / max * 100).toFixed(1)}%"></span></div></div>`).join('') : '<p class="side-note">لا يوجد متحدثون بعد.</p>';
+      body.innerHTML = st.length ? `<p class="side-note">${L(`زمن كل متحدث على الهواء بحسب ${N(settings.wpm)} كلمة في الدقيقة.`, `Each speaker's airtime at ${N(settings.wpm)} words per minute.`)}</p>` + st.map(x => `
+        <div class="ch-item"><div class="ch-row"><span class="ch-name" dir="rtl">${esc(x.name)}</span><span class="ch-meta">${mmss(x.secs)}</span></div>
+        <span class="ch-meta">${N(x.rows)} ${L('سطر', 'rows')} · ${N(x.words)} ${L('كلمة', 'words')}</span><div class="bar"><span style="width:${(x.secs / max * 100).toFixed(1)}%"></span></div></div>`).join('') : `<p class="side-note">${L('لا يوجد متحدثون بعد.', 'No speakers yet.')}</p>`;
     }
   } else renderLib();
 }
@@ -1458,10 +1505,10 @@ $('#sideBody').addEventListener('drop', e => {
     const ins = to > dragFrom ? tb[1] - chunk.length : to;
     rest.splice(ins, 0, ...chunk); s.els = rest;
   });
-  toast('تم تغيير الترتيب', 'تراجع', undo);
+  toast(L('تم تغيير الترتيب', 'Order changed'), L('تراجع', 'Undo'), undo);
 });
 function startRename(old, box) {
-  box.innerHTML = `<input class="ch-rename" id="renameIn" value="${esc(old)}" aria-label="الاسم الجديد"><span class="ch-meta">Enter للتطبيق، Esc للإلغاء</span>`;
+  box.innerHTML = `<input class="ch-rename" id="renameIn" value="${esc(old)}" aria-label="${L('الاسم الجديد', 'New name')}" dir="rtl"><span class="ch-meta">${L('Enter للتطبيق، Esc للإلغاء', 'Enter to apply, Esc to cancel')}</span>`;
   const inp = $('#renameIn'); inp.focus(); inp.select();
   inp.addEventListener('keydown', ev => {
     if (ev.key === 'Escape') { renderSide(); return; }
@@ -1469,7 +1516,7 @@ function startRename(old, box) {
     const nv = inp.value.trim(); if (!nv || nv === old) { renderSide(); return; }
     let n = 0;
     structural(() => cur().els.forEach(e => { if (e.t === 'character' && baseName(e.x) === old) { e.x = nv + e.x.slice(e.x.indexOf(old) + old.length); n++; } }));
-    toast(`أُعيدت تسمية ${N(n)} مداخلة`, 'تراجع', undo);
+    toast(L(`أُعيدت تسمية ${N(n)} مداخلة`, `Renamed ${N(n)} speeches`), L('تراجع', 'Undo'), undo);
   });
 }
 
@@ -1478,12 +1525,13 @@ let confirmDel = null;
 function renderLib() {
   const body = $('#sideBody');
   const list = store.scripts.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-  const fmtDate = t => { try { return new Date(t).toLocaleDateString(settings.num === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'ar-SA-u-ca-gregory-nu-latn', { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
-  body.innerHTML = `<div class="lib-actions"><button class="tbtn" data-new="film">+ سيناريو</button><button class="tbtn" data-new="show">+ برنامج</button><button class="tbtn" data-import="1">استيراد ملف</button></div>` +
+  const loc = settings.lang === 'en' ? (settings.num === 'ar' ? 'en-GB-u-nu-arab' : 'en-GB') : (settings.num === 'ar' ? 'ar-SA-u-ca-gregory-nu-arab' : 'ar-SA-u-ca-gregory-nu-latn');
+  const fmtDate = t => { try { return new Date(t).toLocaleDateString(loc, { day: 'numeric', month: 'short' }); } catch (e) { return ''; } };
+  body.innerHTML = `<div class="lib-actions"><button class="tbtn" data-new="film">${L('+ سيناريو', '+ Screenplay')}</button><button class="tbtn" data-new="show">${L('+ برنامج', '+ Show')}</button><button class="tbtn" data-import="1">${L('استيراد ملف', 'Import file')}</button></div>` +
     list.map(s => `<div class="lib-item ${s.id === store.curId ? 'cur' : ''}" data-open="${s.id}">
-      <div class="lib-title"><span>${esc(s.title || 'بلا عنوان')}</span><span class="badge ${s.mode === 'show' ? 'show' : ''}">${s.mode === 'show' ? 'برنامج' : 'سيناريو'}</span></div>
-      <div class="lib-meta">${confirmDel === s.id ? `<span class="confirm">حذف نهائي من كل أجهزتك؟ <button class="yes" data-del-yes="${s.id}">نعم، احذف</button><button data-del-no="1">لا</button></span>` :
-      `<span>${fmtDate(s.updatedAt)}${cloud.col && unsynced(s) ? ' · لم يُزامَن بعد' : ''}</span><span class="acts"><button data-dup="${s.id}">نسخة</button><button data-del="${s.id}">حذف</button></span>`}</div></div>`).join('');
+      <div class="lib-title"><span dir="rtl">${esc(s.title || L('بلا عنوان', 'Untitled'))}</span><span class="badge ${s.mode === 'show' ? 'show' : ''}">${s.mode === 'show' ? L('برنامج', 'Show') : L('سيناريو', 'Screenplay')}</span></div>
+      <div class="lib-meta">${confirmDel === s.id ? `<span class="confirm">${L('حذف نهائي من كل أجهزتك؟', 'Delete from all your devices?')} <button class="yes" data-del-yes="${s.id}">${L('نعم، احذف', 'Yes, delete')}</button><button data-del-no="1">${L('لا', 'No')}</button></span>` :
+      `<span>${fmtDate(s.updatedAt)}${cloud.col && unsynced(s) ? ' · ' + L('لم يُزامَن بعد', 'not synced yet') : ''}</span><span class="acts"><button data-dup="${s.id}">${L('نسخة', 'Duplicate')}</button><button data-del="${s.id}">${L('حذف', 'Delete')}</button></span>`}</div></div>`).join('');
 }
 function libClick(e) {
   const b = e.target.closest('button');
@@ -1500,7 +1548,7 @@ function libClick(e) {
       cloud.dirty.delete(id);
       if (!store.scripts.length) store.scripts.push(newScript('film'));
       if (store.curId === id) loadScript(store.scripts[0].id); else renderLib();
-      saveLocal(); scheduleFlush(300); toast('حُذف النص'); return;
+      saveLocal(); scheduleFlush(300); toast(L('حُذف النص', 'Script deleted')); return;
     }
     return;
   }
@@ -1526,7 +1574,7 @@ let popEl = null, popAnchor = null;
 function closePop() { if (popEl) { popEl.remove(); popEl = null; popAnchor = null; } }
 function openPop(anchor, html, onClick) {
   closePop();
-  popEl = document.createElement('div'); popEl.className = 'pop'; popEl.dir = 'rtl'; popEl.innerHTML = html; document.body.appendChild(popEl); popAnchor = anchor;
+  popEl = document.createElement('div'); popEl.className = 'pop'; popEl.dir = uiDir(); popEl.innerHTML = html; document.body.appendChild(popEl); popAnchor = anchor;
   const r = anchor.getBoundingClientRect(), w = popEl.offsetWidth;
   popEl.style.top = (r.bottom + 6) + 'px';
   popEl.style.left = Math.max(12, Math.min(r.left, innerWidth - w - 12)) + 'px';
@@ -1540,35 +1588,42 @@ $('#status').addEventListener('click', e => {
   const [txt, , detail] = syncInfo();
   const p = pendingCount();
   openPop(e.currentTarget, `<h4>${esc(txt)}</h4><p>${esc(detail)}</p>` +
-    (cloud.col && p && navigator.onLine ? `<button class="menu-item" data-sync="1"><b>زامن الآن</b><small>${N(p)} ${p === 1 ? 'تعديل ينتظر' : 'تعديلات تنتظر'} الرفع</small></button>` : '') +
-    (BUILD === 'artifact' ? `<div class="menu-sep"></div><button class="menu-item" data-offline="1"><b>نزّل نسخة تعمل دون إنترنت</b><small>ملف واحد تفتحه في متصفح الحاسوب حتى دون اتصال، ومعه نصوصك الحالية.</small></button>` : '') +
+    (cloud.col && p && navigator.onLine ? `<button class="menu-item" data-sync="1"><b>${L('زامن الآن', 'Sync now')}</b><small>${L('بانتظار الرفع', 'Waiting to upload')}: ${N(p)}</small></button>` : '') +
+    (BUILD === 'artifact' ? `<div class="menu-sep"></div><button class="menu-item" data-offline="1"><b>${L('نزّل نسخة تعمل دون إنترنت', 'Download an offline copy')}</b><small>${L('ملف واحد تفتحه في متصفح الحاسوب حتى دون اتصال، ومعه نصوصك الحالية.', 'One file you open in a computer browser, even without internet, with your current scripts.')}</small></button>` : '') +
     (BUILD === 'pwa' ? pwaMenu() : ''),
     ev => {
       if (ev.target.closest('[data-sync]')) { closePop(); store.scripts.forEach(s => { if (unsynced(s)) cloud.dirty.add(s.id); }); flushCloud(); }
       if (ev.target.closest('[data-offline]')) { closePop(); makeOfflineCopy(); }
       if (ev.target.closest('[data-fbsetup]')) { closePop(); openFbSetup(); }
       if (ev.target.closest('[data-signin]')) { closePop(); openSignIn(); }
-      if (ev.target.closest('[data-signout]')) { closePop(); fb.F.signOut(fb.auth).then(() => toast('سُجّل الخروج. نصوصك باقية على هذا الجهاز.')); }
+      if (ev.target.closest('[data-signout]')) { closePop(); fb.F.signOut(fb.auth).then(() => toast(L('سُجّل الخروج. نصوصك باقية على هذا الجهاز.', 'Signed out. Your scripts stay on this device.'))); }
       if (ev.target.closest('[data-install]')) { closePop(); installApp(); }
     });
 });
 
+function iosInstallText() { return L('للتثبيت على iPhone أو iPad: افتح الموقع في Safari، واضغط زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية».', 'To install on iPhone or iPad: open the site in Safari, tap Share, then "Add to Home Screen".'); }
 function pwaMenu() {
   let h = '<div class="menu-sep"></div>';
-  if (cloud.state === 'setup') h += `<button class="menu-item" data-fbsetup="1"><b>فعّل المزامنة</b><small>مرة واحدة: مشروع Firebase مجاني باسمك.</small></button>`;
-  else if (!fb.user) h += `<button class="menu-item" data-signin="1"><b>سجّل الدخول</b><small>بالبريد الإلكتروني، أو أنشئ حساباً أول مرة.</small></button>`;
-  else h += `<p>الحساب: <b dir="ltr">${esc(fb.user.email || '')}</b></p><button class="menu-item" data-signout="1"><b>تسجيل الخروج</b><small>تبقى النصوص على هذا الجهاز وتتوقف المزامنة.</small></button>`;
-  if (cloud.state !== 'setup') h += `<button class="menu-item" data-fbsetup="1"><b>إعدادات Firebase</b><small>عرض القواعد أو تغيير المشروع.</small></button>`;
-  if (installEvt) h += `<button class="menu-item" data-install="1"><b>ثبّت مداد على هذا الجهاز</b><small>يفتح كتطبيق مستقل ويعمل دون إنترنت.</small></button>`;
-  else if (isIOS && !isStandalone) h += `<p class="side-note" style="padding:0 8px">للتثبيت على iPhone أو iPad: افتح الموقع في Safari، واضغط زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية».</p>`;
+  if (cloud.state === 'setup') h += `<button class="menu-item" data-fbsetup="1"><b>${L('فعّل المزامنة', 'Turn on sync')}</b><small>${L('مرة واحدة: مشروع Firebase مجاني باسمك.', 'Once: a free Firebase project in your name.')}</small></button>`;
+  else if (!fb.user) h += `<button class="menu-item" data-signin="1"><b>${L('سجّل الدخول', 'Sign in')}</b><small>${L('بالبريد الإلكتروني، أو أنشئ حساباً أول مرة.', 'With your email, or create an account the first time.')}</small></button>`;
+  else h += `<p>${L('الحساب', 'Account')}: <b dir="ltr">${esc(fb.user.email || '')}</b></p><button class="menu-item" data-signout="1"><b>${L('تسجيل الخروج', 'Sign out')}</b><small>${L('تبقى النصوص على هذا الجهاز وتتوقف المزامنة.', 'Scripts stay on this device and syncing stops.')}</small></button>`;
+  if (cloud.state !== 'setup') h += `<button class="menu-item" data-fbsetup="1"><b>${L('إعدادات Firebase', 'Firebase settings')}</b><small>${L('عرض القواعد أو تغيير المشروع.', 'See the rules or change the project.')}</small></button>`;
+  if (installEvt) h += `<button class="menu-item" data-install="1"><b>${L('ثبّت مداد على هذا الجهاز', 'Install Midad on this device')}</b><small>${L('يفتح كتطبيق مستقل ويعمل دون إنترنت.', 'Opens as its own app and works offline.')}</small></button>`;
+  else if (isIOS && !isStandalone) h += `<p class="side-note" style="padding:0 8px">${iosInstallText()}</p>`;
   return h;
 }
 let installEvt = null;
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; });
-window.addEventListener('appinstalled', () => { installEvt = null; toast('ثُبّت مداد على هذا الجهاز'); });
-async function installApp() { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; }
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; updateInstallBtn(); });
+window.addEventListener('appinstalled', () => { installEvt = null; updateInstallBtn(); toast(L('ثُبّت مداد على هذا الجهاز', 'Midad is installed on this device')); });
+async function installApp() { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; updateInstallBtn(); }
+function updateInstallBtn() { const b = $('#btnInstall'); if (b) b.hidden = !(BUILD === 'pwa' && !isStandalone && (installEvt || isIOS)); }
+$('#btnInstall').addEventListener('click', e => {
+  if (installEvt) return installApp();
+  if (popEl && popAnchor === e.currentTarget) return closePop();
+  openPop(e.currentTarget, `<h4>${L('تثبيت مداد', 'Install Midad')}</h4><p>${iosInstallText()}</p>`);
+});
 
 let dl = null;
 $('#btnExport').addEventListener('click', e => {
@@ -1577,14 +1632,14 @@ $('#btnExport').addEventListener('click', e => {
   const canSave = !!dl || BUILD !== 'artifact';
   const items = [];
   if (canSave) {
-    items.push(['print', 'ملف جاهز للطباعة', film ? `${N(lastPg ? lastPg.count : 0)} صفحة A4 بالترقيم نفسه الظاهر هنا. افتحه واطبعه أو احفظه PDF.` : 'افتحه في المتصفح ثم اطبعه أو احفظه PDF.']);
-    if (film) items.push(['fountain', 'نص Fountain (txt)', 'صيغة نصية مفتوحة لبرامج السيناريو']);
-    else { items.push(['prompter', 'نص الملقّن (txt)', 'الكلام فقط، بأسماء المتحدثين']); items.push(['csv', 'جدول CSV', 'للمخرج وفريق الجرافيك']); }
-    items.push(['backup', 'نسخة احتياطية لكل النصوص', 'ملف JSON. استيراده لاحقاً يدمج كل نص مع نسخته بدل تكراره.']);
+    items.push(['print', L('ملف جاهز للطباعة', 'Print-ready file'), film ? L(`${N(lastPg ? lastPg.count : 0)} صفحة A4 بالترقيم نفسه الظاهر هنا. افتحه واطبعه أو احفظه PDF.`, `${N(lastPg ? lastPg.count : 0)} A4 pages, numbered as shown here. Open it, then print or save as PDF.`) : L('افتحه في المتصفح ثم اطبعه أو احفظه PDF.', 'Open it in a browser, then print or save as PDF.')]);
+    if (film) items.push(['fountain', L('نص Fountain (txt)', 'Fountain text (txt)'), L('صيغة نصية مفتوحة لبرامج السيناريو', 'Open plain-text format for screenwriting apps')]);
+    else { items.push(['prompter', L('نص الملقّن (txt)', 'Prompter text (txt)'), L('الكلام فقط، بأسماء المتحدثين', 'Spoken words only, with speaker names')]); items.push(['csv', L('جدول CSV', 'CSV table'), L('للمخرج وفريق الجرافيك', 'For the director and graphics team')]); }
+    items.push(['backup', L('نسخة احتياطية لكل النصوص', 'Backup of all scripts'), L('ملف JSON. استيراده لاحقاً يدمج كل نص مع نسخته بدل تكراره.', 'A JSON file. Importing it later merges each script with its match instead of duplicating it.')]);
   }
-  items.push(['copy', film ? 'نسخ النص' : 'نسخ نص الملقّن', 'إلى الحافظة، بصيغة نصية']);
-  if (canSave && BUILD === 'artifact') items.push(['offline', 'نسخة تعمل دون إنترنت', 'ملف HTML لمتصفح الحاسوب، ومعه نصوصك الحالية']);
-  openPop(e.currentTarget, `<h4>تصدير «${esc(s.title || 'بلا عنوان')}»</h4>` + items.map(([k, a, b]) => `<button class="menu-item" data-x="${k}"><b>${a}</b><small>${b}</small></button>`).join('') + (canSave ? '' : '<p class="side-note">حفظ الملفات غير متاح في هذا العرض.</p>'), ev => {
+  items.push(['copy', film ? L('نسخ النص', 'Copy text') : L('نسخ نص الملقّن', 'Copy prompter text'), L('إلى الحافظة، بصيغة نصية', 'To the clipboard, as plain text')]);
+  if (canSave && BUILD === 'artifact') items.push(['offline', L('نسخة تعمل دون إنترنت', 'Offline copy'), L('ملف HTML لمتصفح الحاسوب، ومعه نصوصك الحالية', 'An HTML file for a computer browser, with your current scripts')]);
+  openPop(e.currentTarget, `<h4>${L('تصدير', 'Export')} «${esc(s.title || L('بلا عنوان', 'Untitled'))}»</h4>` + items.map(([k, a, b]) => `<button class="menu-item" data-x="${k}"><b>${a}</b><small>${b}</small></button>`).join('') + (canSave ? '' : `<p class="side-note">${L('حفظ الملفات غير متاح في هذا العرض.', 'Saving files is not available in this view.')}</p>`), ev => {
     const b = ev.target.closest('[data-x]'); if (!b) return; closePop(); doExport(b.dataset.x);
   });
 });
@@ -1594,13 +1649,13 @@ async function saveFile(filename, data) {
       const type = /\.html$/.test(filename) ? 'text/html' : /\.json$/.test(filename) ? 'application/json' : /\.csv$/.test(filename) ? 'text/csv' : 'text/plain';
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: type + ';charset=utf-8' })); a.download = filename;
       document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
-      toast('تم حفظ الملف');
-    } catch (e) { toast('تعذّر حفظ الملف'); }
+      toast(L('تم حفظ الملف', 'File saved'));
+    } catch (e) { toast(L('تعذّر حفظ الملف', 'Could not save the file')); }
     return;
   }
-  if (!dl) return toast('حفظ الملفات غير متاح هنا. استخدم «نسخ النص».');
-  try { await dl.save({ filename, data }); toast('تم حفظ الملف'); }
-  catch (e) { if (e && e.code === 'declined') return; if (e && e.code === 'rate_limited') return toast('هناك نافذة حفظ مفتوحة بالفعل'); toast('تعذّر حفظ الملف'); }
+  if (!dl) return toast(L('حفظ الملفات غير متاح هنا. استخدم «نسخ النص».', 'Saving files is not available here. Use "Copy text".'));
+  try { await dl.save({ filename, data }); toast(L('تم حفظ الملف', 'File saved')); }
+  catch (e) { if (e && e.code === 'declined') return; if (e && e.code === 'rate_limited') return toast(L('هناك نافذة حفظ مفتوحة بالفعل', 'A save window is already open')); toast(L('تعذّر حفظ الملف', 'Could not save the file')); }
 }
 const safeName = s => (s.title || 'نص').replace(/[\\/:*?"<>|]+/g, ' ').trim().slice(0, 80) || 'نص';
 async function doExport(k) {
@@ -1613,24 +1668,24 @@ async function doExport(k) {
   if (k === 'offline') return makeOfflineCopy();
   if (k === 'copy') {
     const txt = s.mode === 'film' ? toFountain(s) : toPrompter(s);
-    try { await navigator.clipboard.writeText(txt); toast('نُسخ النص'); }
+    try { await navigator.clipboard.writeText(txt); toast(L('نُسخ النص', 'Text copied')); }
     catch (e) { showCopyFallback(txt); }
   }
 }
 async function makeOfflineCopy() {
-  if (!dl) return toast('حفظ الملفات غير متاح في هذا العرض.');
+  if (!dl) return toast(L('حفظ الملفات غير متاح في هذا العرض.', 'Saving files is not available in this view.'));
   let src;
   try { const r = await fetch('midad-offline.html', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); src = await r.text(); }
-  catch (e) { return toast('تعذّر تجهيز النسخة. تأكد من الاتصال ثم حاول مرة أخرى.'); }
+  catch (e) { return toast(L('تعذّر تجهيز النسخة. تأكد من الاتصال ثم حاول مرة أخرى.', 'Could not prepare the copy. Check your connection and try again.')); }
   const marker = '<!--@@' + 'SEED@@-->';
-  if (!src.includes(marker)) return toast('تعذّر تجهيز النسخة.');
+  if (!src.includes(marker)) return toast(L('تعذّر تجهيز النسخة.', 'Could not prepare the copy.'));
   const data = { id: uid(), at: Date.now(), scripts: store.scripts.map(s => { const c = clone(s); delete c.syncedAt; c.baseAt = s.updatedAt; return c; }) };
   const tag = '<script id="midadSeed" type="application/json">' + JSON.stringify(data).replace(/</g, '\\u003c') + '<\/script>';
   await saveFile('مداد - دون اتصال.html', src.replace(marker, () => tag));
 }
 function showCopyFallback(txt) {
   const sc = document.createElement('div'); sc.className = 'scrim';
-  sc.innerHTML = `<div class="dlg" dir="rtl"><h3>انسخ النص</h3><label>حدّد النص وانسخه<textarea id="copyTa" style="min-height:220px">${esc(txt)}</textarea></label><div class="row-btns"><button class="tbtn" data-close="1">إغلاق</button></div></div>`;
+  sc.innerHTML = `<div class="dlg" dir="${uiDir()}"><h3>${L('انسخ النص', 'Copy the text')}</h3><label>${L('حدّد النص وانسخه', 'Select the text and copy it')}<textarea id="copyTa" dir="rtl" style="min-height:220px">${esc(txt)}</textarea></label><div class="row-btns"><button class="tbtn" data-close="1">${L('إغلاق', 'Close')}</button></div></div>`;
   document.body.appendChild(sc); const ta = $('#copyTa'); ta.focus(); ta.select();
   sc.addEventListener('click', e => { if (e.target === sc || e.target.dataset.close) sc.remove(); });
 }
@@ -1639,38 +1694,87 @@ function showCopyFallback(txt) {
 $('#btnSettings').addEventListener('click', e => {
   if (popEl && popAnchor === e.currentTarget) return closePop();
   const mod = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
-  const p = openPop(e.currentTarget, `<h4>الإعدادات</h4>
-    <div class="set-row"><span>حجم العرض</span><select id="sZoom">${[0.8, 0.9, 1, 1.1, 1.25, 1.5].map(z => `<option value="${z}">${N(Math.round(z * 100))}٪</option>`).join('')}</select></div>
-    <div class="set-row"><span>الأرقام</span><select id="sNum"><option value="ar">١٢٣ (هندية)</option><option value="latin">123 (عربية)</option></select></div>
-    <div class="set-row"><span>سرعة القراءة للبرامج (كلمة/د)</span><input type="number" id="sWpm" min="60" max="250" step="5"></div>
-    <div class="set-row"><label for="sMarks">إظهار فواصل الصفحات</label><input type="checkbox" id="sMarks"></div>
-    <div class="spec"><b>مواصفات الصفحة الثابتة</b><br>A4 · خط نوتو نسخ ${N(12)} نقطة · ${N(PAGE.lines)} سطراً في الصفحة<br>هوامش: ${N('1.5')} بوصة يميناً، وبوصة واحدة في باقي الجهات<br>حجم العرض لا يغيّر الترقيم؛ الصفحات نفسها على كل جهاز وفي الطباعة.</div>
-    <div class="keys"><b>اختصارات السيناريو:</b><br><kbd>Enter</kbd> سطر جديد بالنوع التالي · <kbd>Tab</kbd> تغيير النوع<br><kbd>Shift+Enter</kbd> سطر داخل العنصر · <kbd>Alt+1…6</kbd> نوع محدد<br><kbd>${mod}+Z</kbd> تراجع · <kbd>${mod}+Shift+Z</kbd> إعادة<br><b>البرنامج:</b> <kbd>Tab</kbd> الخانة التالية · <kbd>Enter</kbd> سطر جديد · <kbd>${mod}+Enter</kbd> فقرة جديدة</div>`);
+  const p = openPop(e.currentTarget, `<h4>${L('الإعدادات', 'Settings')}</h4>
+    <div class="set-row"><span>${L('لغة الواجهة', 'Interface language')}</span><select id="sLang"><option value="ar">العربية</option><option value="en">English</option></select></div>
+    <div class="set-row"><span>${L('المظهر', 'Appearance')}</span><select id="sTheme"><option value="auto">${L('حسب الجهاز', 'Match device')}</option><option value="light">${L('نهاري', 'Day')}</option><option value="dark">${L('ليلي', 'Night')}</option></select></div>
+    <div class="set-row"><span>${L('حجم العرض', 'Zoom')}</span><select id="sZoom">${[0.8, 0.9, 1, 1.1, 1.25, 1.5].map(z => `<option value="${z}">${N(Math.round(z * 100))}%</option>`).join('')}</select></div>
+    <div class="set-row"><span>${L('الأرقام', 'Numerals')}</span><select id="sNum"><option value="ar">${L('١٢٣ (هندية)', '١٢٣ (Eastern Arabic)')}</option><option value="latin">${L('123 (عربية)', '123 (Western)')}</option></select></div>
+    <div class="set-row"><span>${L('سرعة القراءة للبرامج (كلمة/د)', 'Show reading speed (wpm)')}</span><input type="number" id="sWpm" min="60" max="250" step="5"></div>
+    <div class="set-row"><label for="sMarks">${L('إظهار فواصل الصفحات', 'Show page breaks')}</label><input type="checkbox" id="sMarks"></div>
+    <div class="spec">${L(`<b>مواصفات الصفحة الثابتة</b><br>A4 · خط نوتو نسخ ${N(12)} نقطة · ${N(PAGE.lines)} سطراً في الصفحة<br>هوامش: ${N('1.5')} بوصة يميناً، وبوصة واحدة في باقي الجهات<br>حجم العرض لا يغيّر الترقيم؛ الصفحات نفسها على كل جهاز وفي الطباعة.`,
+      `<b>Fixed page standard</b><br>A4 · Noto Naskh 12pt · ${N(PAGE.lines)} lines per page<br>Margins: 1.5in on the right (binding), 1in elsewhere<br>Zoom never changes pagination: the same pages on every device and in print.`)}</div>
+    <div class="keys">${L(`<b>اختصارات السيناريو:</b><br><kbd>Enter</kbd> سطر جديد بالنوع التالي · <kbd>Tab</kbd> تغيير النوع<br><kbd>Shift+Enter</kbd> سطر داخل العنصر · <kbd>Alt+1…6</kbd> نوع محدد<br><kbd>${mod}+Z</kbd> تراجع · <kbd>${mod}+Shift+Z</kbd> إعادة<br><b>البرنامج:</b> <kbd>Tab</kbd> الخانة التالية · <kbd>Enter</kbd> سطر جديد · <kbd>${mod}+Enter</kbd> فقرة جديدة<br><b>الملقّن:</b> <kbd>Space</kbd> تشغيل/إيقاف · <kbd>↑</kbd><kbd>↓</kbd> السرعة · <kbd>Esc</kbd> خروج`,
+      `<b>Screenplay shortcuts:</b><br><kbd>Enter</kbd> new line of the next type · <kbd>Tab</kbd> change type<br><kbd>Shift+Enter</kbd> line break inside · <kbd>Alt+1…6</kbd> set a type<br><kbd>${mod}+Z</kbd> undo · <kbd>${mod}+Shift+Z</kbd> redo<br><b>Show:</b> <kbd>Tab</kbd> next field · <kbd>Enter</kbd> new row · <kbd>${mod}+Enter</kbd> new segment<br><b>Prompter:</b> <kbd>Space</kbd> play/pause · <kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>Esc</kbd> exit`)}</div>`);
+  $('#sLang', p).value = settings.lang; $('#sTheme', p).value = settings.theme;
   $('#sZoom', p).value = String(settings.zoom); $('#sNum', p).value = settings.num; $('#sWpm', p).value = settings.wpm; $('#sMarks', p).checked = settings.marks;
   p.addEventListener('change', () => {
+    const langChanged = settings.lang !== $('#sLang', p).value;
+    settings.lang = $('#sLang', p).value; settings.theme = $('#sTheme', p).value;
     settings.zoom = +$('#sZoom', p).value || 1; settings.num = $('#sNum', p).value;
     settings.wpm = Math.min(250, Math.max(60, +$('#sWpm', p).value || 130)); settings.marks = $('#sMarks', p).checked;
-    saveSettings(); applySettings(); render();
+    saveSettings(); applySettings(); render(); renderSide(); refreshStatus();
+    if (langChanged) { closePop(); $('#btnSettings').click(); }
   });
+});
+
+/* ---------- language & theme ---------- */
+const THEME_ICON = {
+  auto: '<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>',
+  light: '<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  dark: '<svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor"/></svg>'
+};
+function applyLang() {
+  const app = $('#app'); app.dir = uiDir(); app.lang = settings.lang;
+  const set = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
+  $('#btnSide').setAttribute('aria-label', L('المشاهد والنصوص', 'Scenes and scripts'));
+  $('#titleIn').placeholder = L('عنوان النص', 'Script title'); $('#titleIn').setAttribute('aria-label', L('عنوان النص', 'Script title'));
+  set('#modeFilm', L('سيناريو', 'Screenplay')); set('#modeShow', L('برنامج', 'Show'));
+  $('.seg-toggle').setAttribute('aria-label', L('صيغة النص', 'Script format'));
+  set('#btnPrompter', '▶ ' + L('الملقّن', 'Prompter'));
+  set('#btnMeta', L('بيانات النص', 'Title page')); set('#btnExport', L('تصدير', 'Export'));
+  set('#btnInstall', '⤓ ' + L('تثبيت', 'Install'));
+  set('#tabLib', L('النصوص', 'Scripts'));
+  const lb = $('#btnLang'); lb.textContent = settings.lang === 'en' ? 'ع' : 'EN'; lb.title = settings.lang === 'en' ? 'العربية' : 'English'; lb.setAttribute('aria-label', lb.title);
+  $('#btnSettings').setAttribute('aria-label', L('الإعدادات', 'Settings'));
+  $('#status').setAttribute('aria-label', L('حالة الحفظ والمزامنة', 'Save and sync status'));
+  applyTheme();
+}
+function applyTheme() {
+  const root = document.documentElement;
+  if (settings.theme === 'auto') { if (themeOwned) root.removeAttribute('data-theme'); }
+  else { root.setAttribute('data-theme', settings.theme); themeOwned = true; }
+  const b = $('#btnTheme');
+  b.innerHTML = THEME_ICON[settings.theme] || THEME_ICON.auto;
+  const name = { auto: L('حسب الجهاز', 'Match device'), light: L('نهاري', 'Day'), dark: L('ليلي', 'Night') }[settings.theme];
+  b.title = L('المظهر: ', 'Appearance: ') + name; b.setAttribute('aria-label', b.title);
+}
+let themeOwned = false;
+$('#btnTheme').addEventListener('click', () => {
+  const order = ['auto', 'light', 'dark'];
+  settings.theme = order[(order.indexOf(settings.theme) + 1) % 3]; saveSettings(); applyTheme();
+  toast(L('المظهر: ', 'Appearance: ') + { auto: L('حسب الجهاز', 'match device'), light: L('نهاري', 'day'), dark: L('ليلي', 'night') }[settings.theme]);
+});
+$('#btnLang').addEventListener('click', () => {
+  settings.lang = settings.lang === 'en' ? 'ar' : 'en'; settings.num = settings.lang === 'en' ? 'latin' : 'ar'; saveSettings(); applySettings(); render(); renderSide(); refreshStatus();
 });
 
 /* ---------- title page / meta ---------- */
 $('#btnMeta').addEventListener('click', openMeta);
 function openMeta() {
   const s = cur(); const sc = document.createElement('div'); sc.className = 'scrim';
-  sc.innerHTML = `<form class="dlg" dir="rtl" id="metaForm"><h3>بيانات النص</h3>
-    <label>العنوان<input id="mTitle" value="${esc(s.title)}"></label>
-    <label>${s.mode === 'show' ? 'إعداد' : 'تأليف'}<input id="mAuthor" value="${esc(s.author)}"></label>
-    <label>المسودة / التاريخ<input id="mDraft" value="${esc(s.draft)}" placeholder="المسودة الأولى"></label>
-    <label>ملاحظات أو بيانات التواصل<textarea id="mNotes">${esc(s.notes)}</textarea></label>
-    <p class="side-note" style="padding:0">تظهر هذه البيانات في صفحة العنوان عند التصدير.</p>
-    <div class="row-btns"><button type="button" class="tbtn" data-close="1">إلغاء</button><button type="submit" class="tbtn primary">حفظ</button></div></form>`;
+  sc.innerHTML = `<form class="dlg" dir="${uiDir()}" id="metaForm"><h3>${L('بيانات النص', 'Title page')}</h3>
+    <label>${L('العنوان', 'Title')}<input id="mTitle" dir="auto" value="${esc(s.title)}"></label>
+    <label>${s.mode === 'show' ? L('إعداد', 'Prepared by') : L('تأليف', 'Written by')}<input id="mAuthor" dir="auto" value="${esc(s.author)}"></label>
+    <label>${L('المسودة / التاريخ', 'Draft / date')}<input id="mDraft" dir="auto" value="${esc(s.draft)}" placeholder="${L('المسودة الأولى', 'First draft')}"></label>
+    <label>${L('ملاحظات أو بيانات التواصل', 'Notes or contact details')}<textarea id="mNotes" dir="auto">${esc(s.notes)}</textarea></label>
+    <p class="side-note" style="padding:0">${L('تظهر هذه البيانات في صفحة العنوان عند التصدير.', 'These appear on the title page when you export.')}</p>
+    <div class="row-btns"><button type="button" class="tbtn" data-close="1">${L('إلغاء', 'Cancel')}</button><button type="submit" class="tbtn primary">${L('حفظ', 'Save')}</button></div></form>`;
   document.body.appendChild(sc); $('#mTitle').focus();
   sc.addEventListener('click', e => { if (e.target === sc || e.target.dataset.close) sc.remove(); });
   $('#metaForm').addEventListener('submit', e => {
     e.preventDefault();
     s.title = $('#mTitle').value.trim(); s.author = $('#mAuthor').value.trim(); s.draft = $('#mDraft').value.trim(); s.notes = $('#mNotes').value.trim();
-    $('#titleIn').value = s.title; touch(); sc.remove(); renderSide(); toast('حُفظت البيانات');
+    $('#titleIn').value = s.title; touch(); sc.remove(); renderSide(); toast(L('حُفظت البيانات', 'Saved'));
   });
 }
 
@@ -1688,18 +1792,18 @@ $('#fileIn').addEventListener('change', e => {
       if (!store.scripts.some(s => s.id === store.curId)) store.curId = store.scripts[0].id;
       rerenderKeepCaret(); renderLib();
       const parts = [];
-      if (r.added) parts.push(`${N(r.added)} جديد`);
-      if (r.updated) parts.push(`${N(r.updated)} حُدّث`);
-      if (r.conflicts) parts.push(`${N(r.conflicts)} عُدّل في المكانين فحُفظ كنسخة منفصلة`);
-      if (r.same) parts.push(`${N(r.same)} دون تغيير`);
-      toast('الاستيراد: ' + (parts.join('، ') || 'لا شيء جديد'));
+      if (r.added) parts.push(L(`${N(r.added)} جديد`, `${N(r.added)} new`));
+      if (r.updated) parts.push(L(`${N(r.updated)} حُدّث`, `${N(r.updated)} updated`));
+      if (r.conflicts) parts.push(L(`${N(r.conflicts)} عُدّل في المكانين فحُفظ كنسخة منفصلة`, `${N(r.conflicts)} changed in both places, kept as a separate copy`));
+      if (r.same) parts.push(L(`${N(r.same)} دون تغيير`, `${N(r.same)} unchanged`));
+      toast(L('الاستيراد: ', 'Import: ') + (parts.join(L('، ', ', ')) || L('لا شيء جديد', 'nothing new')));
       return;
     }
     const p = parseFountain(txt);
     const s = newScript('film', p.meta.title || f.name.replace(/\.[^.]+$/, ''));
     s.author = p.meta.author || ''; s.draft = p.meta.draft || '';
     if (p.els.length) s.els = p.els;
-    store.scripts.push(s); loadScript(s.id); touch(); toast('استُورد النص');
+    store.scripts.push(s); loadScript(s.id); touch(); toast(L('استُورد النص', 'Script imported'));
   };
   rd.readAsText(f);
 });
@@ -1831,11 +1935,167 @@ tr{break-inside:avoid}tr.seg td{border-bottom:1.5px solid #111;padding-top:14pt;
   return printShell(s.title, css, body);
 }
 
+/* ================= teleprompter ================= */
+const pr = { el: null, stage: null, text: null, playing: false, pos: 0, last: 0, raf: 0, idleT: 0, wake: null, counted: false, drag: null };
+function prItems() {
+  const s = cur(), out = [];
+  if (s.mode === 'show') {
+    let lastSpk = null;
+    s.els.forEach((e, i) => {
+      if (e.t === 'seg') { if ((e.x || '').trim()) out.push({ k: 'seg', t: e.x.trim(), i }); lastSpk = null; return; }
+      if ((e.v || '').trim()) out.push({ k: 'cue', t: e.v.trim(), i });
+      const a = (e.a || '').trim(); if (!a) return;
+      const spk = (e.s || '').trim();
+      if (spk && spk !== lastSpk) { out.push({ k: 'spk', t: spk, i }); lastSpk = spk; }
+      out.push({ k: 'p', t: a, i });
+    });
+  } else {
+    s.els.forEach((e, i) => {
+      const x = (e.x || '').trim(); if (!x) return;
+      if (e.t === 'scene') out.push({ k: 'seg', t: x, i });
+      else if (e.t === 'action' || e.t === 'transition') out.push({ k: 'cue', t: x, i });
+      else if (e.t === 'character') out.push({ k: 'spk', t: x, i });
+      else if (e.t === 'paren') out.push({ k: 'p', t: /^\(.*\)$/s.test(x) ? x : '(' + x + ')', i });
+      else out.push({ k: 'p', t: x, i });
+    });
+  }
+  return out;
+}
+const prSpeedPx = () => settings.pr.speed * 8 * (settings.pr.size / 56);
+const prMax = () => Math.max(0, pr.stage.scrollHeight - pr.stage.clientHeight);
+function prRender(keepRatio) {
+  const P = settings.pr, ratio = keepRatio && prMax() ? pr.pos / prMax() : 0;
+  pr.text.style.fontSize = P.size + 'px';
+  pr.text.style.maxWidth = `max(${P.width}%, min(100%, 640px))`;
+  pr.stage.classList.toggle('mirror', P.mirror);
+  pr.text.innerHTML = prItems().filter(it => (it.k !== 'cue' || P.cues) && (it.k !== 'spk' || P.names)).map(it => {
+    const t = esc(it.t);
+    if (it.k === 'p') return `<p data-i="${it.i}">${t.replace(/\([^)]*\)/g, m => `<span class="pr-dir">${m}</span>`).replace(/\n/g, '<br>')}</p>`;
+    return `<div class="pr-${it.k}" data-i="${it.i}">${t}</div>`;
+  }).join('') || `<div class="pr-cue">${esc(L('لا يوجد كلام في هذا النص بعد', 'There is nothing to read in this script yet'))}</div>`;
+  const q = (sel, v) => { const n = pr.el.querySelector(sel); if (n) n.textContent = v; };
+  q('#prSpeed', N(P.speed)); q('#prSize', N(P.size));
+  pr.el.querySelectorAll('[data-p="mirror"],[data-p="cues"],[data-p="names"]').forEach(b => b.classList.toggle('on', !!P[b.dataset.p]));
+  if (keepRatio) prScroll(ratio * prMax());
+  prMeta();
+}
+function prScroll(v) { pr.pos = Math.max(0, Math.min(prMax(), v)); pr.stage.scrollTop = pr.pos; prMeta(); }
+function prMeta() {
+  const max = prMax(), left = max - pr.pos;
+  const m = pr.el.querySelector('#prMeta'); if (m) m.textContent = `${N(Math.round(max ? pr.pos / max * 100 : 0))}% · ${L('متبقٍ', 'left')} ${mmss(left / prSpeedPx())}`;
+  const g = pr.el.querySelector('#prProg'); if (g) g.style.width = (max ? pr.pos / max * 100 : 0) + '%';
+}
+function prTick(t) {
+  if (!pr.playing) return;
+  const dt = Math.min(0.1, (t - pr.last) / 1000); pr.last = t;
+  prScroll(pr.pos + prSpeedPx() * dt);
+  if (pr.pos >= prMax() - 0.5) { prPause(); return; }
+  pr.raf = requestAnimationFrame(prTick);
+}
+async function prPlay() {
+  if (pr.playing) return;
+  if (!pr.counted) {
+    pr.counted = true;
+    const c = document.createElement('div'); c.className = 'pr-count'; pr.el.querySelector('.pr-view').appendChild(c);
+    for (const n of [3, 2, 1]) { c.textContent = N(n); await new Promise(r => setTimeout(r, 700)); if (!pr.el) return; }
+    c.remove();
+  }
+  pr.playing = true; pr.el.classList.add('playing'); pr.last = performance.now();
+  pr.el.querySelector('[data-p="play"]').textContent = '❚❚ ' + L('إيقاف', 'Pause');
+  pr.raf = requestAnimationFrame(prTick); prIdle();
+  try { if (navigator.wakeLock) pr.wake = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function prPause() {
+  pr.playing = false; cancelAnimationFrame(pr.raf);
+  if (!pr.el) return;
+  pr.el.classList.remove('playing', 'idle');
+  pr.el.querySelector('[data-p="play"]').textContent = '▶ ' + L('تشغيل', 'Play');
+  try { pr.wake && pr.wake.release(); } catch (e) {} pr.wake = null;
+}
+function prIdle() {
+  if (!pr.el) return;
+  pr.el.classList.remove('idle'); clearTimeout(pr.idleT);
+  pr.idleT = setTimeout(() => { if (pr.el && pr.playing) pr.el.classList.add('idle'); }, 2500);
+}
+function prSet(k, v) { settings.pr[k] = v; saveSettings(); prRender(true); }
+function prAction(a) {
+  const P = settings.pr;
+  if (a === 'play') return pr.playing ? prPause() : prPlay();
+  if (a === 'slow') return prSet('speed', Math.max(1, P.speed - 1));
+  if (a === 'fast') return prSet('speed', Math.min(30, P.speed + 1));
+  if (a === 'small') return prSet('size', Math.max(28, P.size - 6));
+  if (a === 'big') return prSet('size', Math.min(140, P.size + 6));
+  if (a === 'narrow') return prSet('width', Math.max(40, P.width - 10));
+  if (a === 'wide') return prSet('width', Math.min(100, P.width + 10));
+  if (a === 'mirror' || a === 'cues' || a === 'names') return prSet(a, !P[a]);
+  if (a === 'top') { prPause(); pr.counted = false; return prScroll(0); }
+  if (a === 'close') return closePrompter();
+}
+function prKey(e) {
+  if (!pr.el) return;
+  const k = e.key; let handled = true;
+  if (k === ' ' || k === 'k' || k === 'K') prAction('play');
+  else if (k === 'ArrowUp' || k === 'ArrowRight') prAction('fast');
+  else if (k === 'ArrowDown' || k === 'ArrowLeft') prAction('slow');
+  else if (k === 'PageDown') prScroll(pr.pos + pr.stage.clientHeight * 0.8);
+  else if (k === 'PageUp') prScroll(pr.pos - pr.stage.clientHeight * 0.8);
+  else if (k === 'Home') prAction('top');
+  else if (k === 'm' || k === 'M') prAction('mirror');
+  else if (k === '+' || k === '=') prAction('big');
+  else if (k === '-' || k === '_') prAction('small');
+  else if (k === 'Escape') prAction('close');
+  else handled = false;
+  if (handled) { e.preventDefault(); e.stopPropagation(); if (document.activeElement && pr.el && pr.el.contains(document.activeElement)) document.activeElement.blur(); prIdle(); }
+}
+function openPrompter() {
+  closePop(); acClose();
+  if (document.activeElement && paper.contains(document.activeElement)) document.activeElement.blur();
+  const el = document.createElement('div'); el.className = 'prompter'; el.dir = uiDir();
+  el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', L('الملقّن', 'Teleprompter'));
+  el.innerHTML = `<div class="pr-view"><div class="pr-stage" id="prStage"><div class="pr-text" id="prText" dir="rtl" lang="ar"></div></div>
+      <div class="pr-prog" id="prProg"></div><div class="pr-line" aria-hidden="true"><span></span></div></div>
+    <div class="pr-bar">
+      <button class="play" data-p="play">▶ ${L('تشغيل', 'Play')}</button>
+      <span class="pr-grp">${L('السرعة', 'Speed')} <button data-p="slow" aria-label="${L('أبطأ', 'Slower')}">−</button><b id="prSpeed"></b><button data-p="fast" aria-label="${L('أسرع', 'Faster')}">+</button></span>
+      <span class="pr-grp">${L('الحجم', 'Size')} <button data-p="small" aria-label="${L('أصغر', 'Smaller')}">A−</button><b id="prSize"></b><button data-p="big" aria-label="${L('أكبر', 'Bigger')}">A+</button></span>
+      <span class="pr-grp">${L('العرض', 'Width')} <button data-p="narrow" aria-label="${L('أضيق', 'Narrower')}">→←</button><button data-p="wide" aria-label="${L('أعرض', 'Wider')}">←→</button></span>
+      <button data-p="mirror">⇋ ${L('مرآة', 'Mirror')}</button>
+      <button data-p="cues">${L('الإشارات', 'Cues')}</button>
+      <button data-p="names">${L('الأسماء', 'Names')}</button>
+      <button data-p="top">⤒ ${L('من البداية', 'From top')}</button>
+      <span class="pr-meta" id="prMeta"></span>
+      <button data-p="close">✕ ${L('خروج', 'Exit')}</button>
+    </div>`;
+  document.body.appendChild(el);
+  Object.assign(pr, { el, stage: el.querySelector('#prStage'), text: el.querySelector('#prText'), playing: false, pos: 0, counted: false });
+  prRender(false);
+  // start where the cursor is
+  const target = [...pr.text.querySelectorAll('[data-i]')].find(n => +n.dataset.i >= curIdx);
+  if (target && curIdx > 0) prScroll(target.offsetTop - pr.stage.clientHeight * 0.34 + 4);
+  el.querySelector('.pr-bar').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) { prAction(b.dataset.p); prIdle(); } });
+  el.addEventListener('mousemove', prIdle); el.addEventListener('touchstart', prIdle, { passive: true });
+  pr.stage.addEventListener('wheel', e => { e.preventDefault(); prScroll(pr.pos + e.deltaY); }, { passive: false });
+  pr.stage.addEventListener('pointerdown', e => { pr.drag = { y: e.clientY, pos: pr.pos, moved: false }; pr.stage.setPointerCapture(e.pointerId); });
+  pr.stage.addEventListener('pointermove', e => { if (!pr.drag) return; const dy = e.clientY - pr.drag.y; if (Math.abs(dy) > 6) pr.drag.moved = true; if (pr.drag.moved) prScroll(pr.drag.pos - dy); });
+  pr.stage.addEventListener('pointerup', () => { if (pr.drag && !pr.drag.moved) prAction('play'); pr.drag = null; });
+  window.addEventListener('resize', prResize);
+  document.addEventListener('keydown', prKey, true);
+  try { const r = el.requestFullscreen && el.requestFullscreen(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+}
+const prResize = debounce(() => { if (pr.el) prRender(true); }, 150);
+function closePrompter() {
+  prPause();
+  document.removeEventListener('keydown', prKey, true); window.removeEventListener('resize', prResize);
+  try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
+  if (pr.el) pr.el.remove(); pr.el = null;
+}
+$('#btnPrompter').addEventListener('click', openPrompter);
+
 /* ================= toast & global keys ================= */
 let toastEl = null, toastT;
 function toast(msg, actLabel, act, sticky) {
   if (toastEl) toastEl.remove();
-  toastEl = document.createElement('div'); toastEl.className = 'toast'; toastEl.dir = 'rtl'; toastEl.setAttribute('role', 'status');
+  toastEl = document.createElement('div'); toastEl.className = 'toast'; toastEl.dir = uiDir(); toastEl.setAttribute('role', 'status');
   toastEl.innerHTML = `<span>${esc(msg)}</span>${actLabel ? `<button>${esc(actLabel)}</button>` : ''}`;
   if (actLabel) toastEl.querySelector('button').addEventListener('click', () => { act(); toastEl && toastEl.remove(); });
   document.body.appendChild(toastEl); clearTimeout(toastT); if (!sticky) toastT = setTimeout(() => { toastEl && toastEl.remove(); toastEl = null; }, 5200);
@@ -1844,7 +2104,7 @@ document.addEventListener('keydown', e => {
   const mod = e.ctrlKey || e.metaKey;
   if (mod && !e.altKey && e.code === 'KeyZ') { if (e.target.closest && e.target.closest('input:not(.dur),textarea')) return; e.preventDefault(); e.shiftKey ? redo() : undo(); }
   else if (mod && e.code === 'KeyY') { e.preventDefault(); redo(); }
-  else if (mod && e.code === 'KeyS') { e.preventDefault(); toast(cloud.col ? 'الحفظ تلقائي، والمزامنة مع حسابك تلقائية أيضاً' : 'الحفظ تلقائي — كل تعديل محفوظ'); }
+  else if (mod && e.code === 'KeyS') { e.preventDefault(); toast(cloud.col ? L('الحفظ تلقائي، والمزامنة مع حسابك تلقائية أيضاً', 'Saving and syncing are automatic') : L('الحفظ تلقائي، وكل تعديل محفوظ', 'Saving is automatic')); }
   else if (e.key === 'Escape') { closePop(); acClose(); }
 });
 const onResize = debounce(() => { if (cur().mode === 'film') { layoutPaper(); drawMarks(lastPg); } }, 120);
@@ -1864,13 +2124,14 @@ function bootCaps(tries) {
   } else if (tries > 0) setTimeout(() => bootCaps(tries - 1), 400);
 }
 if (BUILD === 'artifact') bootCaps(6);
+updateInstallBtn();
 if (BUILD === 'pwa') {
   initPwa();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     let wantReload = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (wantReload) location.reload(); });
     navigator.serviceWorker.register('sw.js').then(reg => {
-      const ask = w => toast('نسخة جديدة من مداد جاهزة', 'حدّث الآن', () => { wantReload = true; w.postMessage('skipWaiting'); }, true);
+      const ask = w => toast(L('نسخة جديدة من مداد جاهزة', 'A new version of Midad is ready'), L('حدّث الآن', 'Update now'), () => { wantReload = true; w.postMessage('skipWaiting'); }, true);
       if (reg.waiting && navigator.serviceWorker.controller) ask(reg.waiting);
       reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed' && navigator.serviceWorker.controller) ask(w); }); });
       setInterval(() => reg.update().catch(() => {}), 3600000);

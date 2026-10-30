@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Midad",
+  "version": "1.0.0",
+  "identifier": "app.midad.desktop",
+  "build": {
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "مداد",
+        "width": 1360,
+        "height": 900,
+        "minWidth": 420,
+        "minHeight": 520,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi", "dmg", "app"],
+    "category": "Productivity",
+    "shortDescription": "Arabic screenwriting",
+    "longDescription": "Midad (مداد): an Arabic screenplay and show-script editor with standard pagination, a teleprompter, and sync across devices.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "nsis": {
+        "languages": ["Arabic", "English"],
+        "displayLanguageSelector": true
+      }
+    }
+  }
+}

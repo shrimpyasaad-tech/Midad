@@ -1,0 +1,78 @@
+name: Desktop apps
+
+# Builds the Windows and Mac installers and attaches them to a GitHub Release.
+# Runs when the app or desktop project changes, or by hand from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'firebase.js'
+      - 'config.js'
+      - 'desktop/**'
+      - '.github/workflows/desktop.yml'
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect the app files
+        shell: bash
+        run: |
+          mkdir -p desktop/dist/icons
+          cp index.html firebase.js config.js manifest.webmanifest desktop/dist/
+          cp icons/* desktop/dist/icons/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      - name: Generate app icons
+        working-directory: desktop
+        run: npx --yes @tauri-apps/cli@2 icon app-icon.png
+
+      - name: Build and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          tauriScript: npx --yes @tauri-apps/cli@2
+          args: ${{ matrix.args }}
+          tagName: desktop-v__VERSION__
+          releaseName: 'Midad desktop __VERSION__'
+          releaseBody: |
+            مداد لسطح المكتب / Midad for desktop
+
+            Windows: نزّل ملف ‎.exe‎ وشغّله. إن ظهرت رسالة «Windows protected your PC» اضغط More info ثم Run anyway.
+            Mac: نزّل ملف ‎.dmg‎ واسحب Midad إلى Applications. أول مرة: انقر بزر الفأرة الأيمن على التطبيق واختر Open، أو من System Settings › Privacy & Security اضغط Open Anyway.
+
+            Windows: download the .exe and run it. If you see "Windows protected your PC", click More info, then Run anyway.
+            Mac: download the .dmg and drag Midad to Applications. The first time, right-click the app and choose Open, or use System Settings › Privacy & Security › Open Anyway.
+          releaseDraft: false
+          prerelease: false

@@ -162,8 +162,16 @@ button { cursor: pointer; }
 .reflow .el:first-child { margin-top: 0; }
 .reflow .el-scene::after { inset-inline-start: -1.9em; }
 
-.pgmark { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--accent); opacity: .55; pointer-events: none; z-index: 1; }
-.pgmark span { position: absolute; inset-inline-end: 10px; top: -.85em; background: var(--paper); color: var(--accent); font-family: var(--f-ui); font-size: 11px; line-height: 1.5; padding-inline: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* separate sheets: the paper itself is transparent; each A4 sheet is drawn behind the text */
+.paper.film.pageview.sheets { background: transparent; box-shadow: none; border-radius: 0; isolation: isolate; }
+.pgsheet { position: absolute; left: 0; right: 0; background: var(--paper); box-shadow: var(--shadow); border-radius: 2px; z-index: -1; pointer-events: none; }
+.pgsheet .pgno { position: absolute; top: calc(40 * var(--u)); left: calc(72 * var(--u)); font-family: var(--f-page); font-size: calc(12 * var(--u)); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pgsp { display: block; pointer-events: none; user-select: none; }
+.pgsp + .el { margin-top: 0 !important; }
+.pgghost { position: absolute; right: calc(108 * var(--u)); color: var(--muted); pointer-events: none; user-select: none; white-space: pre; }
+.pgband { display: flex; align-items: center; justify-content: center; height: 30px; margin-block: 22px; margin-inline-start: -38px; margin-inline-end: -16px;
+  background: var(--desk); box-shadow: inset 0 6px 6px -6px rgba(0,0,0,.18), inset 0 -6px 6px -6px rgba(0,0,0,.18); font-family: var(--f-ui); font-size: 11px; color: var(--muted); user-select: none; font-variant-numeric: tabular-nums; }
+.pgband + .el { margin-top: 0 !important; }
 
 /* ---------- paper: show (two-column AV script) ---------- */
 .paper.show { min-height: 80vh; max-width: 1080px; padding: 28px 28px 80px; font-family: var(--f-page); font-size: calc(var(--script-size) - 1px); line-height: 1.7; }
@@ -907,15 +915,15 @@ function paginate(els) {
   els.forEach((e, i) => {
     const x = printText(e);
     if (!x.trim() && e.t !== 'scene') return;
-    items.push({ i, t: e.t, x, sn: e.t === 'scene' ? ++sn : 0, off: 0 });
+    items.push({ i, t: e.t, x, sn: e.t === 'scene' ? ++sn : 0, off: 0, c: 0 });
   });
   measureAll(items);
   const nOf = new Map(items.map(it => [it.i, it.n]));
   const L = PAGE.lines, pages = [[]], breaks = [], sceneP = [];
   let used = 0, speaker = null;
   const put = (it, g) => { pages[pages.length - 1].push({ ...it, g }); used += g + it.n; };
-  const newPage = (i, k) => { pages.push([]); used = 0; breaks.push({ p: pages.length, i, k }); };
-  const contChar = () => { if (speaker) put({ t: 'character', x: baseName(speaker) + CONT_TXT, n: 1, cont: true }, 0); };
+  const newPage = (i, k, c, more) => { pages.push([]); used = 0; breaks.push({ p: pages.length, i, k, c: c || 0, more: !!more, cont: '' }); };
+  const contChar = () => { if (speaker) { const x = baseName(speaker) + CONT_TXT; put({ t: 'character', x, n: 1, cont: true }, 0); breaks[breaks.length - 1].cont = x; } };
   for (let j = 0; j < items.length; j++) {
     const it = items[j], nx = items[j + 1], nx2 = items[j + 2];
     const g = used ? (GAP[it.t] || 0) : 0;
@@ -937,9 +945,10 @@ function paginate(els) {
       if (sp && sp.na <= max) {
         put({ ...it, x: sp.a, n: sp.na }, g);
         if (it.t === 'dialogue') put({ t: 'more', x: MORE_TXT, n: 1 }, 0);
-        newPage(it.i, it.off + sp.na);
+        const c2 = (it.c || 0) + (it.x.length - sp.b.length);
+        newPage(it.i, it.off + sp.na, c2, it.t === 'dialogue');
         if (it.t === 'dialogue') contChar();
-        items.splice(j + 1, 0, { ...it, x: sp.b, n: sp.nb, off: it.off + sp.na, sn: 0, rest: true });
+        items.splice(j + 1, 0, { ...it, x: sp.b, n: sp.nb, off: it.off + sp.na, c: c2, sn: 0, rest: true });
         continue;
       }
     }
@@ -959,9 +968,22 @@ function paginate(els) {
         continue;
       }
     }
+    // a character name never ends a page without at least one line of its speech
+    if (it.t === 'dialogue' || it.t === 'paren') {
+      const cp = pages[pages.length - 1]; let k = cp.length - 1;
+      while (k >= 0 && cp[k].t === 'paren') k--;
+      if (k > 0 && cp[k].t === 'character' && !cp[k].cont) {
+        const moved = cp.splice(k);
+        moved.forEach(x => { used -= (x.g || 0) + x.n; });
+        newPage(moved[0].i, 0, 0);
+        moved.forEach((x, m) => put(x, m ? (GAP[x.t] || 0) : 0));
+        j--; continue;   // place this speech again on the fresh page
+      }
+    }
     const inSpeech = (it.t === 'dialogue' || it.t === 'paren') && speaker && it.t !== 'character';
-    if (inSpeech && used < L) put({ t: 'more', x: MORE_TXT, n: 1 }, 0);
-    newPage(it.i, it.off);
+    const more = inSpeech && used < L;
+    if (more) put({ t: 'more', x: MORE_TXT, n: 1 }, 0);
+    newPage(it.i, it.off, it.c, more);
     if (inSpeech) contChar();
     put(it, 0);
     if (it.t === 'scene') sceneP.push(pages.length);
@@ -1015,25 +1037,68 @@ function renderFilm(s) {
   });
   paper.appendChild(frag);
 }
+const PG_GAP = 28;
+function posAt(el, off) {
+  let rem = off;
+  const walk = n => { for (const c of n.childNodes) { if (c.nodeType === 3) { if (rem <= c.length) return [c, rem]; rem -= c.length; } else if (c.nodeName === 'BR') { rem -= 1; } else if (!c.classList || !c.classList.contains('pgsp')) { const r = walk(c); if (r) return r; } } return null; };
+  return walk(el);
+}
 function drawMarks(pg) {
-  $$('.pgmark', paper).forEach(m => m.remove());
-  if (!pg || !settings.marks || cur().mode !== 'film') return;
-  const frag = document.createDocumentFragment();
-  pg.breaks.forEach(b => {
-    const el = paper.querySelector(`.el[data-i="${b.i}"]`); if (!el) return;
-    let y;
-    if (b.k === 0) {
-      let prev = el.previousElementSibling; while (prev && !prev.classList.contains('el')) prev = prev.previousElementSibling;
-      y = prev ? (prev.offsetTop + prev.offsetHeight + el.offsetTop) / 2 : el.offsetTop - 4;
-    } else {
-      const n = pg.nOf.get(b.i) || 1;
-      y = el.offsetTop + el.offsetHeight * (b.k / n);
+  const active = document.activeElement && paper.contains(document.activeElement) && document.activeElement.isContentEditable ? document.activeElement : null;
+  let caret = null;
+  const old = $$('.pgsp, .pgsheet, .pgghost, .pgband', paper);
+  if (active && old.some(n => active.contains(n))) caret = getCaret(active);
+  old.forEach(n => { const host = n.parentNode; n.remove(); if (host !== paper && host !== active) host.normalize(); });
+  const restore = () => { if (caret !== null && document.activeElement === active) setCaret(active, caret); };
+  const sheets = !!pg && settings.marks && cur().mode === 'film';
+  paper.classList.toggle('sheets', sheets && paper.classList.contains('pageview'));
+  if (!sheets) { restore(); return; }
+  const pageview = paper.classList.contains('pageview');
+  const touchesActive = b => active && +active.dataset.i === b.i && b.c > 0;
+  if (touchesActive && pg.breaks.some(touchesActive) && caret === null) caret = getCaret(active);
+  const makeSpacer = b => {
+    const el = paper.querySelector(`.el[data-i="${b.i}"]`); if (!el) return null;
+    if (b.c > 0) {
+      const at = posAt(el, b.c); if (!at) return null;
+      const sp = document.createElement('span'); sp.className = 'pgsp'; sp.contentEditable = 'false'; sp.setAttribute('aria-hidden', 'true');
+      const r = document.createRange(); r.setStart(at[0], at[1]); r.insertNode(sp);
+      return sp;
     }
-    const m = document.createElement('div'); m.className = 'pgmark'; m.style.top = y.toFixed(1) + 'px';
-    m.innerHTML = `<span>${L('صفحة', 'Page')} ${N(b.p)}</span>`;
-    frag.appendChild(m);
+    const sp = document.createElement('div'); sp.className = 'pgsp'; sp.setAttribute('aria-hidden', 'true'); el.before(sp); return sp;
+  };
+  if (!pageview) {
+    // phone layout: a band marks where each printed page begins
+    pg.breaks.forEach(b => {
+      const el = paper.querySelector(`.el[data-i="${b.i}"]`); if (!el) return;
+      const band = document.createElement('div'); band.className = 'pgband'; band.setAttribute('aria-hidden', 'true');
+      band.textContent = `${L('صفحة', 'Page')} ${N(b.p)}`;
+      if (b.c > 0) el.after(band); else el.before(band);
+    });
+    restore(); return;
+  }
+  const u = parseFloat(paper.style.getPropertyValue('--u')) || PT;
+  const H = PAGE.h * u, LH = PAGE.lh * u, TOP = PAGE.top * u, G = PG_GAP;
+  const ptop = () => paper.getBoundingClientRect().top;
+  const ghost = (cls, text, y) => { const g = document.createElement('div'); g.className = 'pgghost k ' + cls; g.textContent = text; g.style.top = y.toFixed(1) + 'px'; g.dir = 'rtl'; paper.appendChild(g); };
+  pg.breaks.forEach(b => {
+    const sp = makeSpacer(b); if (!sp) return;
+    const y = sp.getBoundingClientRect().top - ptop();
+    const pageTop = (b.p - 1) * (H + G);
+    const target = pageTop + TOP + (b.cont ? LH : 0);
+    sp.style.height = Math.max(0, target - y).toFixed(2) + 'px';
+    if (b.more) ghost('k-more', MORE_TXT, y);
+    if (b.cont) ghost('k-character', b.cont, pageTop + TOP);
   });
+  const frag = document.createDocumentFragment();
+  for (let p = 0; p < pg.count; p++) {
+    const d = document.createElement('div'); d.className = 'pgsheet';
+    d.style.top = (p * (H + G)).toFixed(2) + 'px'; d.style.height = H.toFixed(2) + 'px';
+    if (p) d.innerHTML = `<span class="pgno">${N(p + 1)}</span>`;
+    frag.appendChild(d);
+  }
   paper.appendChild(frag);
+  paper.style.minHeight = (pg.count * (H + G) - G).toFixed(2) + 'px';
+  restore();
 }
 
 function renderShow(s) {
@@ -1084,10 +1149,10 @@ const updateDerived = debounce(() => {
   const s = cur();
   if (s.mode === 'film') {
     const pg = paginate(s.els); lastPg = pg;
+    paper.style.minHeight = '';
     drawMarks(pg);
     const scenes = s.els.filter(e => e.t === 'scene').length;
     $('#stat').innerHTML = `<b>${N(pg.count)}</b> ${L(pg.count === 1 ? 'صفحة' : pg.count === 2 ? 'صفحتان' : 'صفحات', pg.count === 1 ? 'page' : 'pages')}<span class="stat-extra"> · ${L('نحو', '≈')} ${N(pg.count)} ${L('د', 'min')} · ${N(scenes)} ${L('مشاهد', 'scenes')}</span>`;
-    paper.style.minHeight = paper.classList.contains('pageview') ? `calc(${pg.count} * ${PAGE.h} * var(--u))` : '';
     navCache = { pg };
   } else {
     lastPg = null;
@@ -1608,17 +1673,19 @@ function pwaMenu() {
   else if (!fb.user) h += `<button class="menu-item" data-signin="1"><b>${L('سجّل الدخول', 'Sign in')}</b><small>${L('بالبريد الإلكتروني، أو أنشئ حساباً أول مرة.', 'With your email, or create an account the first time.')}</small></button>`;
   else h += `<p>${L('الحساب', 'Account')}: <b dir="ltr">${esc(fb.user.email || '')}</b></p><button class="menu-item" data-signout="1"><b>${L('تسجيل الخروج', 'Sign out')}</b><small>${L('تبقى النصوص على هذا الجهاز وتتوقف المزامنة.', 'Scripts stay on this device and syncing stops.')}</small></button>`;
   if (cloud.state !== 'setup') h += `<button class="menu-item" data-fbsetup="1"><b>${L('إعدادات Firebase', 'Firebase settings')}</b><small>${L('عرض القواعد أو تغيير المشروع.', 'See the rules or change the project.')}</small></button>`;
-  if (installEvt) h += `<button class="menu-item" data-install="1"><b>${L('ثبّت مداد على هذا الجهاز', 'Install Midad on this device')}</b><small>${L('يفتح كتطبيق مستقل ويعمل دون إنترنت.', 'Opens as its own app and works offline.')}</small></button>`;
+  if (IN_DESKTOP) {}
+  else if (installEvt) h += `<button class="menu-item" data-install="1"><b>${L('ثبّت مداد على هذا الجهاز', 'Install Midad on this device')}</b><small>${L('يفتح كتطبيق مستقل ويعمل دون إنترنت.', 'Opens as its own app and works offline.')}</small></button>`;
   else if (isIOS && !isStandalone) h += `<p class="side-note" style="padding:0 8px">${iosInstallText()}</p>`;
   return h;
 }
 let installEvt = null;
+const IN_DESKTOP = !!(window.__TAURI_INTERNALS__ || window.__TAURI__) || /^tauri/.test(location.protocol) || location.hostname === 'tauri.localhost';
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; updateInstallBtn(); });
 window.addEventListener('appinstalled', () => { installEvt = null; updateInstallBtn(); toast(L('ثُبّت مداد على هذا الجهاز', 'Midad is installed on this device')); });
 async function installApp() { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; updateInstallBtn(); }
-function updateInstallBtn() { const b = $('#btnInstall'); if (b) b.hidden = !(BUILD === 'pwa' && !isStandalone && (installEvt || isIOS)); }
+function updateInstallBtn() { const b = $('#btnInstall'); if (b) b.hidden = !(BUILD === 'pwa' && !IN_DESKTOP && !isStandalone && (installEvt || isIOS)); }
 $('#btnInstall').addEventListener('click', e => {
   if (installEvt) return installApp();
   if (popEl && popAnchor === e.currentTarget) return closePop();
@@ -1644,6 +1711,12 @@ $('#btnExport').addEventListener('click', e => {
   });
 });
 async function saveFile(filename, data) {
+  const T = window.__TAURI__ && window.__TAURI__.core;
+  if (T && T.invoke) {
+    try { const path = await T.invoke('save_file', { name: filename, data: String(data) }); toast(L('حُفظ في التنزيلات: ', 'Saved to Downloads: ') + String(path).split(/[\/\\]/).pop()); }
+    catch (e) { toast(L('تعذّر حفظ الملف', 'Could not save the file')); }
+    return;
+  }
   if (BUILD !== 'artifact') {
     try {
       const type = /\.html$/.test(filename) ? 'text/html' : /\.json$/.test(filename) ? 'application/json' : /\.csv$/.test(filename) ? 'text/csv' : 'text/plain';
@@ -1700,7 +1773,7 @@ $('#btnSettings').addEventListener('click', e => {
     <div class="set-row"><span>${L('حجم العرض', 'Zoom')}</span><select id="sZoom">${[0.8, 0.9, 1, 1.1, 1.25, 1.5].map(z => `<option value="${z}">${N(Math.round(z * 100))}%</option>`).join('')}</select></div>
     <div class="set-row"><span>${L('الأرقام', 'Numerals')}</span><select id="sNum"><option value="ar">${L('١٢٣ (هندية)', '١٢٣ (Eastern Arabic)')}</option><option value="latin">${L('123 (عربية)', '123 (Western)')}</option></select></div>
     <div class="set-row"><span>${L('سرعة القراءة للبرامج (كلمة/د)', 'Show reading speed (wpm)')}</span><input type="number" id="sWpm" min="60" max="250" step="5"></div>
-    <div class="set-row"><label for="sMarks">${L('إظهار فواصل الصفحات', 'Show page breaks')}</label><input type="checkbox" id="sMarks"></div>
+    <div class="set-row"><label for="sMarks">${L('عرض الصفحات منفصلة', 'Show separate pages')}</label><input type="checkbox" id="sMarks"></div>
     <div class="spec">${L(`<b>مواصفات الصفحة الثابتة</b><br>A4 · خط نوتو نسخ ${N(12)} نقطة · ${N(PAGE.lines)} سطراً في الصفحة<br>هوامش: ${N('1.5')} بوصة يميناً، وبوصة واحدة في باقي الجهات<br>حجم العرض لا يغيّر الترقيم؛ الصفحات نفسها على كل جهاز وفي الطباعة.`,
       `<b>Fixed page standard</b><br>A4 · Noto Naskh 12pt · ${N(PAGE.lines)} lines per page<br>Margins: 1.5in on the right (binding), 1in elsewhere<br>Zoom never changes pagination: the same pages on every device and in print.`)}</div>
     <div class="keys">${L(`<b>اختصارات السيناريو:</b><br><kbd>Enter</kbd> سطر جديد بالنوع التالي · <kbd>Tab</kbd> تغيير النوع<br><kbd>Shift+Enter</kbd> سطر داخل العنصر · <kbd>Alt+1…6</kbd> نوع محدد<br><kbd>${mod}+Z</kbd> تراجع · <kbd>${mod}+Shift+Z</kbd> إعادة<br><b>البرنامج:</b> <kbd>Tab</kbd> الخانة التالية · <kbd>Enter</kbd> سطر جديد · <kbd>${mod}+Enter</kbd> فقرة جديدة<br><b>الملقّن:</b> <kbd>Space</kbd> تشغيل/إيقاف · <kbd>↑</kbd><kbd>↓</kbd> السرعة · <kbd>Esc</kbd> خروج`,
@@ -2127,7 +2200,7 @@ if (BUILD === 'artifact') bootCaps(6);
 updateInstallBtn();
 if (BUILD === 'pwa') {
   initPwa();
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  if ('serviceWorker' in navigator && location.protocol !== 'file:' && !IN_DESKTOP) {
     let wantReload = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (wantReload) location.reload(); });
     navigator.serviceWorker.register('sw.js').then(reg => {

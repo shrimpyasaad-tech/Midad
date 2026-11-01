@@ -1,5 +1,5 @@
 // مداد: يحفظ التطبيق على الجهاز ليعمل دون إنترنت
-const VERSION = 'midad-c6b1824f91';
+const VERSION = 'midad-5c641eef6b';
 const ASSETS = ['./', 'index.html', 'firebase.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'config.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS))); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });

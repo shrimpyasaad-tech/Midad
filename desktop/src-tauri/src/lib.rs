@@ -9,6 +9,7 @@ fn save_file(app: tauri::AppHandle, name: String, data: String) -> Result<String
         .path()
         .download_dir()
         .or_else(|_| app.path().document_dir())
+        .or_else(|_| app.path().home_dir())
         .map_err(|e| e.to_string())?;
     let clean: String = name
         .chars()

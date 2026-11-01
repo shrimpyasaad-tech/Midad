@@ -831,7 +831,7 @@ function getCaret(el) {
   return textOf(pre.cloneContents()).length;
 }
 function selCollapsed() { const s = getSelection(); return !s.rangeCount || s.getRangeAt(0).collapsed; }
-function setCaret(el, off) {
+function setCaret(el, off, noScroll) {
   el.focus({ preventScroll: true });
   const sel = getSelection(), r = document.createRange(); let rem = off, done = false;
   const walk = n => { for (const c of n.childNodes) { if (done) return; if (c.nodeType === 3) { if (rem <= c.length) { r.setStart(c, rem); done = true; return; } rem -= c.length; } else if (c.nodeName === 'BR') { if (rem === 0) { r.setStartBefore(c); done = true; return; } rem -= 1; } else walk(c); } };
@@ -839,6 +839,7 @@ function setCaret(el, off) {
   if (!done) { r.selectNodeContents(el); r.collapse(false); } else r.collapse(true);
   sel.removeAllRanges(); sel.addRange(r);
   const rect = el.getBoundingClientRect(), desk = $('#desk').getBoundingClientRect();
+  if (noScroll) return;
   if (rect.top < desk.top + 20 || rect.bottom > desk.bottom - 40) el.scrollIntoView({ block: 'center' });
 }
 function caretRect() { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).cloneRange(); const rs = r.getClientRects(); return rs.length ? rs[0] : null; }
@@ -1012,11 +1013,15 @@ function layoutPaper() {
   paper.style.setProperty('--u', u.toFixed(4) + 'px');
 }
 function render() {
-  const s = cur();
-  paper.className = 'paper ' + (s.mode === 'show' ? 'show' : 'film'); paper.style.minHeight = '';
+  const s = cur(), desk = $('#desk'), keepTop = desk.scrollTop, keepH = paper.offsetHeight;
+  if (keepH) paper.style.minHeight = keepH + 'px';
+  marksSig = '';
+  paper.className = 'paper ' + (s.mode === 'show' ? 'show' : 'film');
   paper.innerHTML = '';
   if (s.mode === 'show') renderShow(s); else { layoutPaper(); renderFilm(s); }
   renderTools(); updateDerived.flush();
+  if (s.mode !== 'film') paper.style.minHeight = '';
+  if (desk.scrollTop !== keepTop) desk.scrollTop = keepTop;
 }
 function rerenderKeepCaret() {
   const a = document.activeElement; let off = null; const f = curField;
@@ -1043,29 +1048,49 @@ function posAt(el, off) {
   const walk = n => { for (const c of n.childNodes) { if (c.nodeType === 3) { if (rem <= c.length) return [c, rem]; rem -= c.length; } else if (c.nodeName === 'BR') { rem -= 1; } else if (!c.classList || !c.classList.contains('pgsp')) { const r = walk(c); if (r) return r; } } return null; };
   return walk(el);
 }
+let marksSig = '';
 function drawMarks(pg) {
+  const desk = $('#desk'), keepTop = desk.scrollTop;
   const active = document.activeElement && paper.contains(document.activeElement) && document.activeElement.isContentEditable ? document.activeElement : null;
+  const sheets = !!pg && settings.marks && cur().mode === 'film';
+  const pageview = paper.classList.contains('pageview');
+  const u = parseFloat(paper.style.getPropertyValue('--u')) || PT;
+  const sig = !sheets ? 'off' : [pageview ? 'p' : 'r', u.toFixed(4), pg.count, pg.breaks.map(b => [b.p, b.i, b.c, b.more ? 1 : 0, b.cont].join(':')).join('|')].join('#');
+  const H = PAGE.h * u, LH = PAGE.lh * u, TOP = PAGE.top * u, G = PG_GAP;
+  const ptop = () => paper.getBoundingClientRect().top;
+  const ghost = (cls, text, y) => { const g = document.createElement('div'); g.className = 'pgghost k ' + cls; g.textContent = text; g.style.top = y.toFixed(1) + 'px'; g.dir = 'rtl'; paper.appendChild(g); };
+  const sizeSpacers = list => {
+    $$('.pgghost', paper).forEach(n => n.remove());
+    // each spacer's top depends only on the spacers before it, so one pass in order is exact
+    list.forEach(({ sp, b }) => {
+      const y = sp.getBoundingClientRect().top - ptop();
+      const pageTop = (b.p - 1) * (H + G);
+      sp.style.height = Math.max(0, pageTop + TOP + (b.cont ? LH : 0) - y).toFixed(2) + 'px';
+      if (b.more) ghost('k-more', MORE_TXT, y);
+      if (b.cont) ghost('k-character', b.cont, pageTop + TOP);
+    });
+  };
+  // same page breaks as last time: adjust the spacers in place, no rebuild (keeps scroll and caret still)
+  const existing = $$('.pgsp', paper);
+  if (sig === marksSig && sheets && pageview && existing.length === pg.breaks.length && existing.every(n => n.isConnected)) {
+    sizeSpacers(existing.map((sp, k) => ({ sp, b: pg.breaks[k] })));
+    if (desk.scrollTop !== keepTop) desk.scrollTop = keepTop;
+    return;
+  }
+  marksSig = sig;
+  // full rebuild: hold the page height so the view can't snap upward while the breaks are redrawn
+  paper.style.minHeight = paper.offsetHeight + 'px';
   let caret = null;
   const old = $$('.pgsp, .pgsheet, .pgghost, .pgband', paper);
-  if (active && old.some(n => active.contains(n))) caret = getCaret(active);
-  old.forEach(n => { const host = n.parentNode; n.remove(); if (host !== paper && host !== active) host.normalize(); });
-  const restore = () => { if (caret !== null && document.activeElement === active) setCaret(active, caret); };
-  const sheets = !!pg && settings.marks && cur().mode === 'film';
-  paper.classList.toggle('sheets', sheets && paper.classList.contains('pageview'));
-  if (!sheets) { restore(); return; }
-  const pageview = paper.classList.contains('pageview');
   const touchesActive = b => active && +active.dataset.i === b.i && b.c > 0;
-  if (touchesActive && pg.breaks.some(touchesActive) && caret === null) caret = getCaret(active);
-  const makeSpacer = b => {
-    const el = paper.querySelector(`.el[data-i="${b.i}"]`); if (!el) return null;
-    if (b.c > 0) {
-      const at = posAt(el, b.c); if (!at) return null;
-      const sp = document.createElement('span'); sp.className = 'pgsp'; sp.contentEditable = 'false'; sp.setAttribute('aria-hidden', 'true');
-      const r = document.createRange(); r.setStart(at[0], at[1]); r.insertNode(sp);
-      return sp;
-    }
-    const sp = document.createElement('div'); sp.className = 'pgsp'; sp.setAttribute('aria-hidden', 'true'); el.before(sp); return sp;
+  if (active && (old.some(n => active.contains(n)) || (sheets && pg.breaks.some(touchesActive)))) caret = getCaret(active);
+  old.forEach(n => { const host = n.parentNode; n.remove(); if (host && host !== paper && host !== active) host.normalize(); });
+  const finish = () => {
+    if (caret !== null && document.activeElement === active) setCaret(active, caret, true);
+    desk.scrollTop = keepTop;
   };
+  paper.classList.toggle('sheets', sheets && pageview);
+  if (!sheets) { paper.style.minHeight = ''; finish(); return; }
   if (!pageview) {
     // phone layout: a band marks where each printed page begins
     pg.breaks.forEach(b => {
@@ -1074,21 +1099,20 @@ function drawMarks(pg) {
       band.textContent = `${L('صفحة', 'Page')} ${N(b.p)}`;
       if (b.c > 0) el.after(band); else el.before(band);
     });
-    restore(); return;
+    paper.style.minHeight = ''; finish(); return;
   }
-  const u = parseFloat(paper.style.getPropertyValue('--u')) || PT;
-  const H = PAGE.h * u, LH = PAGE.lh * u, TOP = PAGE.top * u, G = PG_GAP;
-  const ptop = () => paper.getBoundingClientRect().top;
-  const ghost = (cls, text, y) => { const g = document.createElement('div'); g.className = 'pgghost k ' + cls; g.textContent = text; g.style.top = y.toFixed(1) + 'px'; g.dir = 'rtl'; paper.appendChild(g); };
+  const list = [];
   pg.breaks.forEach(b => {
-    const sp = makeSpacer(b); if (!sp) return;
-    const y = sp.getBoundingClientRect().top - ptop();
-    const pageTop = (b.p - 1) * (H + G);
-    const target = pageTop + TOP + (b.cont ? LH : 0);
-    sp.style.height = Math.max(0, target - y).toFixed(2) + 'px';
-    if (b.more) ghost('k-more', MORE_TXT, y);
-    if (b.cont) ghost('k-character', b.cont, pageTop + TOP);
+    const el = paper.querySelector(`.el[data-i="${b.i}"]`); if (!el) return;
+    let sp;
+    if (b.c > 0) {
+      const at = posAt(el, b.c); if (!at) return;
+      sp = document.createElement('span'); sp.className = 'pgsp'; sp.contentEditable = 'false'; sp.setAttribute('aria-hidden', 'true');
+      const r = document.createRange(); r.setStart(at[0], at[1]); r.insertNode(sp);
+    } else { sp = document.createElement('div'); sp.className = 'pgsp'; sp.setAttribute('aria-hidden', 'true'); el.before(sp); }
+    list.push({ sp, b });
   });
+  sizeSpacers(list);
   const frag = document.createDocumentFragment();
   for (let p = 0; p < pg.count; p++) {
     const d = document.createElement('div'); d.className = 'pgsheet';
@@ -1098,7 +1122,7 @@ function drawMarks(pg) {
   }
   paper.appendChild(frag);
   paper.style.minHeight = (pg.count * (H + G) - G).toFixed(2) + 'px';
-  restore();
+  finish();
 }
 
 function renderShow(s) {
@@ -1149,7 +1173,6 @@ const updateDerived = debounce(() => {
   const s = cur();
   if (s.mode === 'film') {
     const pg = paginate(s.els); lastPg = pg;
-    paper.style.minHeight = '';
     drawMarks(pg);
     const scenes = s.els.filter(e => e.t === 'scene').length;
     $('#stat').innerHTML = `<b>${N(pg.count)}</b> ${L(pg.count === 1 ? 'صفحة' : pg.count === 2 ? 'صفحتان' : 'صفحات', pg.count === 1 ? 'page' : 'pages')}<span class="stat-extra"> · ${L('نحو', '≈')} ${N(pg.count)} ${L('د', 'min')} · ${N(scenes)} ${L('مشاهد', 'scenes')}</span>`;
@@ -1621,7 +1644,7 @@ function libClick(e) {
 }
 function loadScript(id, keepTab) {
   store.curId = id; hist = []; hpos = -1; curIdx = 0;
-  render(); pushHist(); saveLocal(); refreshStatus();
+  render(); $('#desk').scrollTop = 0; pushHist(); saveLocal(); refreshStatus();
   if (!keepTab) renderSide();
 }
 

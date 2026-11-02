@@ -7,6 +7,19 @@
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
+ "file_handlers": [
+  {
+   "action": "./",
+   "accept": {
+    "application/x-midad": [
+     ".midad"
+    ],
+    "text/plain": [
+     ".fountain"
+    ]
+   }
+  }
+ ],
  "background_color": "#E2E6ED",
  "theme_color": "#F4F6F9",
  "icons": [

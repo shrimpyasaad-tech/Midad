@@ -1,6 +1,6 @@
 [package]
 name = "midad"
-version = "1.0.2"
+version = "1.0.3"
 description = "Midad: Arabic screenwriting"
 edition = "2021"
 
@@ -13,6 +13,10 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+
+[target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
+tauri-plugin-single-instance = "2"
 
 [profile.release]
 codegen-units = 1
